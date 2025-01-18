@@ -1,0 +1,8 @@
+name: PaperModAPI
+version: '1.0-SNAPSHOT'
+main: de.cjdev.papermodapi.PaperModAPI
+api-version: '1.21.4'
+load: STARTUP
+authors: [CJDev]
+description: A Modding API for Paper
+website: https://modrinth.com/project/paper-mod-api
