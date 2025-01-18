@@ -15,7 +15,7 @@ public class CustomItems {
     private static final BiMap<Key, CustomItem> items = HashBiMap.create();
 
     private static Key createItemId(String id){
-        return Key.key("create", id);
+        return Key.key("papermodapi", id);
     }
 
     public static CustomItem register(String id, Function<CustomItem.Settings, CustomItem> factory){
@@ -26,8 +26,16 @@ public class CustomItems {
         return register(createItemId(id), factory, settings);
     }
 
+    public static CustomItem register(Key id, CustomItem.Settings settings) {
+        return register(id, CustomItem::new, settings);
+    }
+
     public static CustomItem register(String id, CustomItem.Settings settings) {
         return register(createItemId(id), CustomItem::new, settings);
+    }
+
+    public static CustomItem register(Key id) {
+        return register(id, CustomItem::new, new CustomItem.Settings());
     }
 
     public static CustomItem register(String id) {

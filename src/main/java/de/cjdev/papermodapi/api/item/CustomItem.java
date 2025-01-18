@@ -55,7 +55,6 @@ public class CustomItem {
     public final ItemStack getDefaultStack() {
         ItemStack stack = ItemStack.of(Material.CLOCK);
         Key id = getId(this);
-        PaperModAPI.LOGGER.info(id.asString());
         stack.setData(DataComponentTypes.ITEM_NAME, getName());
         stack.setData(DataComponentTypes.ITEM_MODEL, id);
         this.components.forEach((valued, o) -> stack.setData(valued, o));
@@ -65,7 +64,6 @@ public class CustomItem {
 
     public final ItemStack getDisplayStack() {
         ItemStack stack = ItemStack.of(Material.CLOCK);
-        stack.getDataTypes().forEach(stack::unsetData);
         stack.setData(DataComponentTypes.ITEM_MODEL, getId(this));
         if(this.components.containsKey(DataComponentTypes.CUSTOM_MODEL_DATA))
             stack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, (CustomModelData) this.components.get(DataComponentTypes.CUSTOM_MODEL_DATA));
