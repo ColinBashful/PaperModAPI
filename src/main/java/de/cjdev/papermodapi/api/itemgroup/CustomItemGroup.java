@@ -3,6 +3,7 @@ package de.cjdev.papermodapi.api.itemgroup;
 import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.translation.GlobalTranslator;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -31,6 +32,7 @@ public class CustomItemGroup {
         this.iconSupplier = iconSupplier;
         this.displayName = displayName;
         this.entryCollector = entryCollector;
+        this.updateEntries(true);
     }
 
     public static Builder builder(){
@@ -93,6 +95,8 @@ public class CustomItemGroup {
 
         @Override
         public void add(ItemStack stack) {
+            if (stacks.contains(stack))
+                throw new IllegalStateException("Accidentally adding the same item stack twice " + PlainTextComponentSerializer.plainText().serialize(stack.displayName()) + " to a Creative Mode Tab: " + PlainTextComponentSerializer.plainText().serialize(this.group.displayName));
             stacks.add(stack.asOne());
         }
     }
@@ -112,7 +116,7 @@ public class CustomItemGroup {
             stacks.forEach(this::add);
         }
 
-        default void addAllItems(Collection<CustomItem> items) {
+        default void addAll(Collection<CustomItem> items) {
             items.forEach(this::add);
         }
     }

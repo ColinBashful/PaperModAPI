@@ -24,7 +24,7 @@ public class Util {
         return id == null ? type + ".unregistered_sadface" : type + "." + id.namespace() + "." + id.value();
     }
 
-    public static Key resourceLocationToKey(ResourceLocation resourceLocation){
+    public static Key getKey(ResourceLocation resourceLocation){
         return Key.key(resourceLocation.getNamespace(), resourceLocation.getPath());
     }
 
@@ -70,6 +70,9 @@ public class Util {
         return new BlockPos(position.blockX(), position.blockY(), position.blockZ());
     }
 
+    ///
+    /// Note: You'll need paperweight for this
+    ///
     public static UseOnContext fromItemUsageContext(ItemUsageContext context){
         Player player = ((CraftPlayer)context.getPlayer()).getHandle();
         // Don't wanna throw an error .-.

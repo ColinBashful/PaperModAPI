@@ -30,12 +30,12 @@ public record CustomArmorMaterial(
 ) {
     public CustomItem.Settings humanoidProperties(CustomItem.Settings settings, EquipmentSlot equipmentType) {
         ArmorType armorType = switch (equipmentType){
-            case HAND, OFF_HAND -> throw new NullPointerException();
             case FEET -> ArmorType.BOOTS;
             case LEGS -> ArmorType.LEGGINGS;
             case CHEST -> ArmorType.CHESTPLATE;
             case HEAD -> ArmorType.HELMET;
             case BODY -> ArmorType.BODY;
+            default -> throw new NullPointerException();
         };
         return settings.maxDamage(armorType.getDurability(this.durability))
                 .attributeModifiers(this.createAttributes(armorType, equipmentType))

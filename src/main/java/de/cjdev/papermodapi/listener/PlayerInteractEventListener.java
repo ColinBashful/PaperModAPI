@@ -6,13 +6,17 @@ import de.cjdev.papermodapi.api.item.CustomItems;
 import de.cjdev.papermodapi.api.util.ActionResult;
 import de.cjdev.papermodapi.api.util.BlockHitResult;
 import de.cjdev.papermodapi.api.util.ItemUsageContext;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.UseCooldown;
+import io.papermc.paper.event.player.PlayerItemFrameChangeEvent;
+import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -25,15 +29,21 @@ import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.VoxelShape;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerInteractEventListener implements Listener {
 //    private final List<Player> swingingPlayers = new ArrayList<>();
@@ -47,22 +57,18 @@ public class PlayerInteractEventListener implements Listener {
 //                                entity -> !(entity instanceof Item)).isEmpty());
 //    }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getHand() == null)
+        if (event.getHand() == null || event.getItem() == null)
             return;
 
-        if (event.getItem() == null)
+        ItemStack stack = event.getItem();
+        CustomItem customItem = CustomItems.getItemByStack(stack);
+        if (customItem == null)
             return;
-
-        if (!event.getItem().getPersistentDataContainer().has(new NamespacedKey(PaperModAPI.getPlugin(), "item"), PersistentDataType.STRING))
-            return;
-
-        String customItemKey = event.getItem().getPersistentDataContainer().get(new NamespacedKey(PaperModAPI.getPlugin(), "item"), PersistentDataType.STRING);
 
         Player player = event.getPlayer();
         EquipmentSlot hand = event.getHand();
-
 //        switch (event.getAction()) {
 //            case RIGHT_CLICK_BLOCK -> {
 //                if (swingingPlayers.contains(player))
@@ -233,28 +239,48 @@ public class PlayerInteractEventListener implements Listener {
 //                }
 //            }
 //        }
-
-        Key itemKey = Key.key(customItemKey);
-        CustomItem customItem = CustomItems.getItemByKey(itemKey);
-        if (customItem == null)
+        if (player.hasCooldown(stack))
             return;
-        //event.getPlayer().sendMessage(customItemKey);
 
+        ActionResult actionResult = null;
         switch (event.getAction()) {
             case RIGHT_CLICK_AIR -> {
-                ActionResult actionResult = customItem.use(player.getWorld(), player, hand);
+                actionResult = customItem.use(player.getWorld(), player, hand);
                 if (actionResult.shouldSwingHand())
                     player.swingHand(hand);
             }
             case RIGHT_CLICK_BLOCK -> {
-                // To Do
-                //
-                //  new Vector3d(0d, 0d, 0d) ändern in Position der Maus, kp, Raycast
-                //
-                ActionResult actionResult = customItem.useOnBlock(new ItemUsageContext(player, hand, new BlockHitResult(event.getInteractionPoint(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false), player.getWorld(), event.getItem()));
+                if (player.isSneaking())
+                    break;
+                actionResult = customItem.useOnBlock(new ItemUsageContext(player, hand, new BlockHitResult(event.getInteractionPoint(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false, false), player.getWorld(), event.getItem()));
                 if (actionResult.shouldSwingHand())
                     player.swingHand(hand);
             }
         }
+
+        if (actionResult != null && actionResult.isAccepted()) {
+            UseCooldown useCooldown = stack.getData(DataComponentTypes.USE_COOLDOWN);
+            if (useCooldown == null)
+                return;
+            player.setCooldown(stack, (int) (useCooldown.seconds() * 20));
+        }
+    }
+
+    @EventHandler
+    public void onPlayerStopUsingItem(PlayerStopUsingItemEvent event) {
+        CustomItem customItem = CustomItems.getItemByStack(event.getItem());
+        if (customItem == null)
+            return;
+
+        customItem.onStoppedUsing(event.getItem(), event.getPlayer().getWorld(), event.getPlayer(), event.getTicksHeldFor());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent event){
+        ItemStack stack = event.getPlayer().getInventory().getItem(event.getHand());
+        CustomItem customItem = CustomItems.getItemByStack(stack);
+        if (customItem == null)
+            return;
+        customItem.useOnEntity(stack, event.getPlayer(), event.getRightClicked(), event.getHand());
     }
 }

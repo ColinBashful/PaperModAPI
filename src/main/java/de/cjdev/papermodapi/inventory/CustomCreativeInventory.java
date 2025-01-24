@@ -12,8 +12,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -62,7 +60,7 @@ public class CustomCreativeInventory implements InventoryHolder {
         ItemStack placeholder = ItemStack.of(Material.GRAY_STAINED_GLASS_PANE);
         placeholder.editMeta(itemMeta -> itemMeta.setHideTooltip(true));
 
-        int validInventorySize = (inventory.getSize() - 9);
+        int validInventorySize = inventory.getSize() - 9;
         for (int i = this.inventory.getSize() - 9; i < this.inventory.getSize(); i++)
             this.inventory.setItem(i, placeholder);
         if (selectedItemGroup != null)
@@ -81,10 +79,11 @@ public class CustomCreativeInventory implements InventoryHolder {
 
         boolean uiClick = event.getClickedInventory() == inventory;
         int clickedSlot = event.getSlot();
+        int validInventorySize = inventory.getSize() - 9;
 
-        if (uiClick && clickedSlot >= inventory.getSize() - 9) {
+        if (uiClick && clickedSlot >= validInventorySize) {
             event.setCancelled(true);
-            if (clickedSlot == inventory.getSize() - 9 && page > 0) {
+            if (clickedSlot == validInventorySize && page > 0) {
                 page--;
                 refresh();
             } else if (clickedSlot == inventory.getSize() - 5 && selectedItemGroup != null) {
@@ -98,7 +97,11 @@ public class CustomCreativeInventory implements InventoryHolder {
 
         if (selectedItemGroup == null) {
             event.setCancelled(true);
-            player.openInventory(new CustomCreativeInventory(plugin, player.isOp(), CustomItemGroup.getItemGroups().get(event.getSlot())).getInventory());
+            List<CustomItemGroup> itemGroups = CustomItemGroup.getItemGroups();
+            int clickedItemGroup = page * validInventorySize + event.getSlot();
+            if (clickedItemGroup > itemGroups.size())
+                return;
+            player.openInventory(new CustomCreativeInventory(plugin, player.isOp(), itemGroups.get(clickedItemGroup)).getInventory());
             return;
         }
 
