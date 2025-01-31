@@ -1,49 +1,32 @@
 package de.cjdev.papermodapi.listener;
 
+import de.cjdev.morepaperevents.api.event.CampfirePlaceItemEvent;
 import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import de.cjdev.papermodapi.api.item.CustomItems;
+import de.cjdev.papermodapi.api.recipe.CustomCookingRecipe;
+import de.cjdev.papermodapi.api.recipe.CustomCookingRecipeInput;
+import de.cjdev.papermodapi.api.recipe.CustomRecipe;
 import de.cjdev.papermodapi.api.util.ActionResult;
 import de.cjdev.papermodapi.api.util.BlockHitResult;
 import de.cjdev.papermodapi.api.util.ItemUsageContext;
+import de.cjdev.papermodapi.api.util.Util;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.UseCooldown;
-import io.papermc.paper.event.player.PlayerItemFrameChangeEvent;
 import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.phys.Vec3;
-import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.Directional;
-import org.bukkit.block.data.type.Bell;
-import org.bukkit.block.data.type.RespawnAnchor;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.VoxelShape;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import org.bukkit.util.Vector;
 
 public class PlayerInteractEventListener implements Listener {
 //    private final List<Player> swingingPlayers = new ArrayList<>();
@@ -57,8 +40,48 @@ public class PlayerInteractEventListener implements Listener {
 //                                entity -> !(entity instanceof Item)).isEmpty());
 //    }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onCampfirePlaceItem(CampfirePlaceItemEvent event) {
+        CustomCookingRecipeInput cookingRecipeInput = new CustomCookingRecipeInput(null, event.getPlaceStack());
+        for (CustomRecipe<?> customRecipe : PaperModAPI.CustomRecipes) {
+            if (!(customRecipe instanceof CustomCookingRecipe customCookingRecipe))
+                continue;
+            if (customCookingRecipe.matches(cookingRecipeInput)) {
+                event.allowPlacing(true);
+                return;
+            }
+        }
+        if (cookingRecipeInput.isCustom())
+            event.allowPlacing(false);
+    }
+
+    ///
+    /// TODO: Fix this somehow
+    ///
+    /// Problem: won't call if right clicked air, 'cause it's cancelled then, but if ignoreCancelled is false, player's will interact even
+    /// if they interacted with an entity at the same time
+    ///
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+//        Vector oldVector = player.getVelocity();
+//
+//        float yaw = player.getYaw();
+//        float pitch = player.getPitch();
+//
+//        double yawRad = Math.toRadians(yaw);
+//        double pitchRad = Math.toRadians(pitch);
+//        Vector playerRotation = new Vector(-Math.sin(yawRad) * Math.cos(pitchRad), -Math.sin(pitchRad), Math.cos(yawRad) * Math.cos(pitchRad));
+//        player.setVelocity(new Vector(oldVector.getX() + playerRotation.getX(), oldVector.getY() + playerRotation.getY(), oldVector.getZ() + playerRotation.getZ()));
+
+        InteractionResult interactionResult = null;
+        if (!player.isSneaking() && event.getClickedBlock() != null && event.getInteractionPoint() != null) {
+            interactionResult = ((CraftWorld) event.getPlayer().getWorld()).getHandle().getBlockState(Util.nmsBlockPos(event.getClickedBlock().getLocation().toBlock())).useWithoutItem(((CraftWorld) player.getWorld()).getHandle(), ((CraftPlayer) player).getHandle(), new BlockHitResult(event.getInteractionPoint(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false).asNMSCopy());
+        }
+
+        if (interactionResult != null && interactionResult.consumesAction())
+            return;
+
         if (event.getHand() == null || event.getItem() == null)
             return;
 
@@ -67,7 +90,6 @@ public class PlayerInteractEventListener implements Listener {
         if (customItem == null)
             return;
 
-        Player player = event.getPlayer();
         EquipmentSlot hand = event.getHand();
 //        switch (event.getAction()) {
 //            case RIGHT_CLICK_BLOCK -> {
@@ -81,76 +103,8 @@ public class PlayerInteractEventListener implements Listener {
 //                    Location blockLocation = event.getClickedBlock().getLocation();
 //                    BlockPos NMSblockPos = new BlockPos(blockLocation.getBlockX(), blockLocation.getBlockY(), blockLocation.getBlockZ());
 //                    ServerLevel serverLevel = ((CraftWorld) event.getClickedBlock().getWorld()).getHandle();
-//                    InteractionHand interactionHand = switch (event.getHand()) {
-//                        case HAND -> InteractionHand.MAIN_HAND;
-//                        default -> InteractionHand.OFF_HAND;
-//                    };
-//                    Direction NMSdirection = switch (event.getBlockFace()) {
-//                        case NORTH -> Direction.NORTH;
-//                        case SOUTH -> Direction.SOUTH;
-//                        case WEST -> Direction.WEST;
-//                        case EAST -> Direction.EAST;
-//                        case UP -> Direction.UP;
-//                        default -> Direction.DOWN; // DOWN
-//                    };
-//                    Location location = event.getInteractionPoint();
-//                    Vec3 NMSinteractionPoint = new Vec3(location.getX(), location.getY(), location.getZ());
-//                    net.minecraft.world.phys.BlockHitResult blockHitResult = new net.minecraft.world.phys.BlockHitResult(NMSinteractionPoint, NMSdirection, NMSblockPos, false);
-//                    InteractionResult interactionResult = serverLevel.getBlockState(NMSblockPos).useItemOn(ItemStack.fromBukkitCopy(event.getItem()), serverLevel, ((CraftPlayer) player).getHandle(), interactionHand, blockHitResult);
-//                    //player.sendMessage(String.valueOf(interactionResult.toString()));
-//
-//                    Material blockMaterial = event.getClickedBlock().getBlockData().getMaterial();
-//
-//                    if (blockMaterial.isInteractable()) {
-//                        MATERIAL_CHECK:
-//                        {
-//                            switch (blockMaterial) {
-//                                case CAMPFIRE, SOUL_CAMPFIRE, COMPOSTER, FLETCHING_TABLE, CAULDRON, JUKEBOX,
-//                                     BEE_NEST, BEEHIVE, CANDLE, BLACK_CANDLE, GRAY_CANDLE, LIGHT_GRAY_CANDLE,
-//                                     WHITE_CANDLE, RED_CANDLE, ORANGE_CANDLE, YELLOW_CANDLE, LIME_CANDLE, BLUE_CANDLE,
-//                                     CYAN_CANDLE, LIGHT_BLUE_CANDLE, MAGENTA_CANDLE, PURPLE_CANDLE, PINK_CANDLE, BROWN_CANDLE -> {
-//                                }
-//                                case RESPAWN_ANCHOR -> {
-//                                    if (((RespawnAnchor) event.getClickedBlock().getBlockData()).getCharges() > 0)
-//                                        return;
-//                                }
-//                                case CHISELED_BOOKSHELF -> {
-//                                    if (((Directional) event.getClickedBlock().getBlockData()).getFacing() == event.getBlockFace())
-//                                        return;
-//                                }
-//                                case BELL -> {
-//                                    Bell blockData = ((Bell) event.getClickedBlock().getBlockData());
-//
-//                                    BlockFace side = event.getBlockFace();
-//                                    switch (side) {
-//                                        case UP, DOWN -> {
-//                                            break MATERIAL_CHECK;
-//                                        }
-//                                    }
-//
-//                                    if (event.getInteractionPoint().getY() % 1f > 0.8125f)
-//                                        break MATERIAL_CHECK;
-//
-//                                    switch (blockData.getAttachment()) {
-//                                        case CEILING -> {
-//                                            return;
-//                                        }
-//                                        case FLOOR -> { // ah i see lol
-//                                            if (Util.axisFromBlockFace(side) == Util.axisFromBlockFace(blockData.getFacing()))
-//                                                return;
-//                                        }
-//                                        case SINGLE_WALL, DOUBLE_WALL -> {
-//                                            if (Util.axisFromBlockFace(side) != Util.axisFromBlockFace(blockData.getFacing()))
-//                                                return;
-//                                        }
-//                                    }
-//                                }
-//                                default -> {
-//                                    return;
-//                                }
-//                            }
-//                        }
-//                    }
+//                    InteractionHand interactionHand = Util.nmsInteractionHand(event.getHand());
+//                    Direction NMSdirection = Util.directionFromBlockFace(event.getBlockFace());
 //                }
 //
 //                Optional<CustomBlock> customBlock = CustomBlock.getBlockAtPos(event.getClickedBlock().getLocation());
@@ -250,8 +204,6 @@ public class PlayerInteractEventListener implements Listener {
                     player.swingHand(hand);
             }
             case RIGHT_CLICK_BLOCK -> {
-                if (player.isSneaking())
-                    break;
                 actionResult = customItem.useOnBlock(new ItemUsageContext(player, hand, new BlockHitResult(event.getInteractionPoint(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false, false), player.getWorld(), event.getItem()));
                 if (actionResult.shouldSwingHand())
                     player.swingHand(hand);

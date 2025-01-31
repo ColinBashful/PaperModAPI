@@ -34,6 +34,7 @@ repositories {
 dependencies {
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    compileOnly files('C:/Minecraft Servers/Paper Plugin Test Server/mods/MorePaperEvents-1.0-SNAPSHOT.jar')
     //annotationProcessor('org.spongepowered.mixin:0.8.0')
     //implementation('net.minecrell:MixinBootstrap:1.1.0')
 }

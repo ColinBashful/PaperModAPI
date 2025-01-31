@@ -19,7 +19,7 @@ public class CustomShapedRecipe implements CustomCraftingRecipe {
     private String[] shape;
     private int width;
     private int height;
-    private Map<Character, CustomRecipeChoice> ingredientMap;
+    private Map<Character, CustomIngredient> ingredientMap;
 
     public CustomShapedRecipe(ItemStack result) {
         this.result = result;
@@ -65,7 +65,7 @@ public class CustomShapedRecipe implements CustomCraftingRecipe {
 
         System.arraycopy(shape, 0, this.shape, 0, shape.length);
 
-        HashMap<Character, CustomRecipeChoice> newIngredientMap = new HashMap<>();
+        HashMap<Character, CustomIngredient> newIngredientMap = new HashMap<>();
 
         for(String row : shape) {
             for(char c : row.toCharArray()) {
@@ -79,23 +79,27 @@ public class CustomShapedRecipe implements CustomCraftingRecipe {
         return this;
     }
 
-    public CustomRecipeChoice getIngredient(char ingredientChar){
+    public CustomIngredient getIngredient(char ingredientChar){
         return this.ingredientMap.get(ingredientChar);
     }
 
-    public CustomShapedRecipe setIngredient(char key, @NotNull CustomRecipeChoice recipeChoice){
+    public CustomShapedRecipe setIngredient(char key, @NotNull CustomIngredient recipeChoice){
         Preconditions.checkArgument(key != ' ', "Space in recipe shape must represent no ingredient");
         Preconditions.checkArgument(this.ingredientMap.containsKey(key), "Symbol does not appear in the shape:", key);
-        ingredientMap.put(key, recipeChoice);
+        ingredientMap.put(key, recipeChoice.clone());
         return this;
     }
 
+    public CustomShapedRecipe setIngredient(char key, @NotNull NamespacedKey material){
+        return this.setIngredient(key, new CustomIngredient(material));
+    }
+
     public CustomShapedRecipe setIngredient(char key, @NotNull Material material){
-        return this.setIngredient(key, new CustomRecipeChoice.MaterialChoice(material));
+        return this.setIngredient(key, material.getKey());
     }
 
     public CustomShapedRecipe setIngredient(char key, @NotNull CustomItem customItem) {
-        return this.setIngredient(key, new CustomRecipeChoice.CustomItemChoice(customItem));
+        return this.setIngredient(key, new CustomIngredient(customItem));
     }
 
     @Override
@@ -136,7 +140,7 @@ public class CustomShapedRecipe implements CustomCraftingRecipe {
                 ItemStack itemStack = craftingInput.getItem(craftIndex);
 
                 // Get the CustomRecipeChoice for the current character using the getIngredient method
-                CustomRecipeChoice choice = this.getIngredient(recipeChar);
+                CustomIngredient choice = this.getIngredient(recipeChar);
                 if (choice == null || !choice.test(itemStack)) {
                     return false;
                 }

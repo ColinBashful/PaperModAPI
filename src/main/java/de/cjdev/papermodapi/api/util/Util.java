@@ -39,7 +39,7 @@ public class Util {
         };
     }
 
-    public static Axis axisFromBlockFace(BlockFace side){
+    public static Axis nmsAxis(BlockFace side){
         return switch (side) {
             case WEST, EAST -> Axis.X;
             case UP, DOWN -> Axis.Y;
@@ -47,7 +47,7 @@ public class Util {
         };
     }
 
-    public static BlockFace blockFaceFromAxis(Axis axis){
+    public static BlockFace bukkitBlockFace(Axis axis){
         return switch (axis) {
             case X -> BlockFace.EAST; // (West / East)
             case Y -> BlockFace.UP; // (Up / Down)
@@ -66,8 +66,12 @@ public class Util {
         };
     }
 
-    public static BlockPos fromBlockPosition(BlockPosition position){
+    public static BlockPos nmsBlockPos(BlockPosition position){
         return new BlockPos(position.blockX(), position.blockY(), position.blockZ());
+    }
+
+    public static InteractionHand nmsInteractionHand(EquipmentSlot equipmentSlot){
+        return equipmentSlot == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
     }
 
     ///
@@ -77,12 +81,12 @@ public class Util {
         Player player = ((CraftPlayer)context.getPlayer()).getHandle();
         // Don't wanna throw an error .-.
         // Nobody has ever placed a block with their feet before, have they?
-        InteractionHand hand = context.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        InteractionHand hand = nmsInteractionHand(context.getHand());
         Level level = ((CraftWorld)context.getWorld()).getHandle();
         Location hitLocation = context.getHitPos();
         Vec3 hitSpot = new Vec3(hitLocation.x(), hitLocation.y(), hitLocation.z());
         Direction direction = directionFromBlockFace(context.getSide());
-        BlockPos blockPos = fromBlockPosition(context.getBlockPos());
+        BlockPos blockPos = nmsBlockPos(context.getBlockPos());
 
         // Wth is inside, or rather how is it determined
         net.minecraft.world.phys.BlockHitResult hitResult = new BlockHitResult(hitSpot, direction, blockPos, false);

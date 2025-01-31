@@ -1,13 +1,7 @@
 package de.cjdev.papermodapi.listener;
 
-import de.cjdev.papermodapi.PaperModAPI;
-import de.cjdev.papermodapi.api.item.CustomItem;
-import de.cjdev.papermodapi.api.item.CustomItems;
+import de.cjdev.papermodapi.api.component.CustomDataComponents;
 import de.cjdev.papermodapi.inventory.CustomCreativeInventory;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.tags.ItemTags;
-import org.bukkit.Material;
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -16,6 +10,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.FurnaceInventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.view.BrewingStandView;
 
 public class InventoryClickEventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -23,6 +18,9 @@ public class InventoryClickEventListener implements Listener {
         if (event.getInventory().getHolder(false) instanceof CustomCreativeInventory inventory) {
             inventory.onClickEvent(event);
             return;
+        }
+        if(event.getClickedInventory() instanceof BrewingStandView brewingStandView){
+
         }
         if (event.getClickedInventory() instanceof FurnaceInventory furnaceInventory) {
             if (event.getSlotType() != InventoryType.SlotType.FUEL) return;
@@ -42,11 +40,7 @@ public class InventoryClickEventListener implements Listener {
             if(currentItem.getType().isFuel()){
                 return;
             }
-            CustomItem customItem = CustomItems.getItemByStack(cursorItem);
-            if (customItem == null)
-                return;
-            Integer fuelTicks = PaperModAPI.FuelItems.get(customItem);
-            if (fuelTicks == null)
+            if(!CustomDataComponents.FUEL_COMPONENT.has(cursorItem))
                 return;
             event.setCancelled(true);
             if (rightClick) {
@@ -88,11 +82,8 @@ public class InventoryClickEventListener implements Listener {
             if(currentItem.getType().isFuel()){
                 return;
             }
-            CustomItem customItem = CustomItems.getItemByStack(currentItem);
-            if (customItem == null)
-                return;
-            Integer fuelTicks = PaperModAPI.FuelItems.get(customItem);
-            if (fuelTicks == null)
+
+            if(!CustomDataComponents.FUEL_COMPONENT.has(currentItem))
                 return;
             event.setCancelled(true);
             ItemStack fuelStack = furnaceInventory.getFuel();

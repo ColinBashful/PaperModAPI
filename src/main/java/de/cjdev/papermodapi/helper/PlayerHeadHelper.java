@@ -22,14 +22,12 @@ public class PlayerHeadHelper {
 
         try {
             textures.setSkin(new URL(texture));
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+            profile.setTextures(textures);
+        } catch (MalformedURLException ignored) {
         }
 
-        profile.setTextures(textures);
-
         skull.editMeta(itemMeta -> {
-            SkullMeta skullMeta = (SkullMeta)itemMeta;
+            SkullMeta skullMeta = (SkullMeta) itemMeta;
 
             skullMeta.setPlayerProfile(profile);
         });

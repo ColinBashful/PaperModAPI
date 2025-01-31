@@ -10,5 +10,6 @@ import javax.annotation.Nullable;
 public interface CustomRecipe<T extends CustomRecipeInput> {
     @NotNull ItemStack assemble(@NotNull T craftingInput);
     boolean matches(@NotNull T craftingInput);
+    //@Nullable CustomRecipe<T> fromBukkitRecipe();
     @Nullable Recipe toBukketRecipe(NamespacedKey key);
 }

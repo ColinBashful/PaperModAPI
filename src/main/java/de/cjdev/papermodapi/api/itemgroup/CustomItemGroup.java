@@ -1,10 +1,8 @@
 package de.cjdev.papermodapi.api.itemgroup;
 
-import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import net.kyori.adventure.translation.GlobalTranslator;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -12,7 +10,6 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class CustomItemGroup {
-    private static final List<CustomItemGroup> itemGroups = new ArrayList<>();
     public final Component displayName;
     private Collection<ItemStack> displayStacks;
     public final Supplier<ItemStack> iconSupplier;
@@ -37,10 +34,6 @@ public class CustomItemGroup {
 
     public static Builder builder(){
         return new Builder();
-    }
-
-    public static List<CustomItemGroup> getItemGroups(){
-        return Collections.unmodifiableList(itemGroups);
     }
 
     public record DisplayContext(boolean hasPermissions) {
@@ -79,9 +72,7 @@ public class CustomItemGroup {
         }
 
         public CustomItemGroup build(){
-            CustomItemGroup itemGroup = new CustomItemGroup(iconSupplier, displayName, entryCollector);
-            itemGroups.add(itemGroup);
-            return itemGroup;
+            return new CustomItemGroup(iconSupplier, displayName, entryCollector);
         }
     }
 

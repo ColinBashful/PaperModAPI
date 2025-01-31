@@ -6,12 +6,12 @@ import java.util.Optional;
 
 public interface CustomSmithingRecipe extends CustomRecipe<CustomSmithingRecipeInput> {
     default boolean matches(@NotNull CustomSmithingRecipeInput craftingInput) {
-        return CustomRecipeChoice.testOptionalIngredient(this.templateIngredient(), craftingInput.template()) && CustomRecipeChoice.testOptionalIngredient(this.baseIngredient(), craftingInput.base()) && CustomRecipeChoice.testOptionalIngredient(this.additionIngredient(), craftingInput.addition());
+        return CustomIngredient.testOptionalIngredient(this.templateIngredient(), craftingInput.template()) && CustomIngredient.testOptionalIngredient(this.baseIngredient(), craftingInput.base()) && CustomIngredient.testOptionalIngredient(this.additionIngredient(), craftingInput.addition());
     }
 
-    Optional<CustomRecipeChoice> templateIngredient();
+    Optional<CustomIngredient> templateIngredient();
 
-    Optional<CustomRecipeChoice> baseIngredient();
+    Optional<CustomIngredient> baseIngredient();
 
-    Optional<CustomRecipeChoice> additionIngredient();
+    Optional<CustomIngredient> additionIngredient();
 }

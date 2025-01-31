@@ -6,7 +6,6 @@ import com.mojang.serialization.DataResult;
 import it.unimi.dsi.fastutil.chars.CharArraySet;
 import it.unimi.dsi.fastutil.chars.CharSet;
 import net.minecraft.Util;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -19,12 +18,12 @@ public class CraftShapedRecipePattern {
     //public static final StreamCodec<RegistryFriendlyByteBuf, CustomShapedRecipePattern> STREAM_CODEC;
     private final int width;
     private final int height;
-    private final List<Optional<CustomRecipeChoice>> ingredients;
+    private final List<Optional<CustomIngredient>> ingredients;
     private final Optional<CraftShapedRecipePattern.Data> data;
     private final int ingredientCount;
     private final boolean symmetrical;
 
-    public CraftShapedRecipePattern(int width, int height, List<Optional<CustomRecipeChoice>> ingredients, Optional<CraftShapedRecipePattern.Data> data) {
+    public CraftShapedRecipePattern(int width, int height, List<Optional<CustomIngredient>> ingredients, Optional<CraftShapedRecipePattern.Data> data) {
         this.width = width;
         this.height = height;
         this.ingredients = ingredients;
@@ -33,15 +32,15 @@ public class CraftShapedRecipePattern {
         this.symmetrical = Util.isSymmetrical(width, height, ingredients);
     }
 
-    private static CraftShapedRecipePattern createFromNetwork(Integer width, Integer height, List<Optional<CustomRecipeChoice>> ingredients) {
+    private static CraftShapedRecipePattern createFromNetwork(Integer width, Integer height, List<Optional<CustomIngredient>> ingredients) {
         return new CraftShapedRecipePattern(width, height, ingredients, Optional.empty());
     }
 
-    public static CraftShapedRecipePattern of(Map<Character, CustomRecipeChoice> key, String... pattern) {
+    public static CraftShapedRecipePattern of(Map<Character, CustomIngredient> key, String... pattern) {
         return of(key, List.of(pattern));
     }
 
-    public static CraftShapedRecipePattern of(Map<Character, CustomRecipeChoice> key, List<String> pattern) {
+    public static CraftShapedRecipePattern of(Map<Character, CustomIngredient> key, List<String> pattern) {
         CraftShapedRecipePattern.Data data = new CraftShapedRecipePattern.Data(key, pattern);
         return unpack(data).getOrThrow();
     }
@@ -50,17 +49,17 @@ public class CraftShapedRecipePattern {
         String[] strings = shrink(data.pattern);
         int len = strings[0].length();
         int i = strings.length;
-        List<Optional<CustomRecipeChoice>> list = new ArrayList<>(len * i);
+        List<Optional<CustomIngredient>> list = new ArrayList<>(len * i);
         CharSet set = new CharArraySet(data.key.keySet());
 
         for(String string : strings) {
             for(int i1 = 0; i1 < string.length(); ++i1) {
                 char c = string.charAt(i1);
-                Optional<CustomRecipeChoice> optional;
+                Optional<CustomIngredient> optional;
                 if (c == ' ') {
                     optional = Optional.empty();
                 } else {
-                    CustomRecipeChoice ingredient = data.key.get(c);
+                    CustomIngredient ingredient = data.key.get(c);
                     if (ingredient == null) {
                         return DataResult.error(() -> "Pattern references symbol '" + c + "' but it's not defined in the key");
                     }
@@ -176,7 +175,7 @@ public class CraftShapedRecipePattern {
         return this.height;
     }
 
-    public List<Optional<CustomRecipeChoice>> ingredients() {
+    public List<Optional<CustomIngredient>> ingredients() {
         return this.ingredients;
     }
 
@@ -185,17 +184,17 @@ public class CraftShapedRecipePattern {
         //STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, (shapedRecipePattern) -> shapedRecipePattern.width, ByteBufCodecs.VAR_INT, (shapedRecipePattern) -> shapedRecipePattern.height, Ingredient.OPTIONAL_CONTENTS_STREAM_CODEC.apply(ByteBufCodecs.list()), (shapedRecipePattern) -> shapedRecipePattern.ingredients, CustomShapedRecipePattern::createFromNetwork);
     }
 
-    public static record Data(Map<Character, CustomRecipeChoice> key, List<String> pattern) {
+    public static record Data(Map<Character, CustomIngredient> key, List<String> pattern) {
         private static final Codec<List<String>> PATTERN_CODEC;
         private static final Codec<Character> SYMBOL_CODEC;
         //public static final MapCodec<CustomShapedRecipePattern.Data> MAP_CODEC;
 
-        public Data(Map<Character, CustomRecipeChoice> key, List<String> pattern) {
+        public Data(Map<Character, CustomIngredient> key, List<String> pattern) {
             this.key = key;
             this.pattern = pattern;
         }
 
-        public Map<Character, CustomRecipeChoice> key() {
+        public Map<Character, CustomIngredient> key() {
             return this.key;
         }
 

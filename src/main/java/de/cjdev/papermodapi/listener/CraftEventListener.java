@@ -1,32 +1,24 @@
 package de.cjdev.papermodapi.listener;
 
-import com.destroystokyo.paper.event.inventory.PrepareResultEvent;
 import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import de.cjdev.papermodapi.api.item.CustomItems;
 import de.cjdev.papermodapi.api.recipe.*;
-import io.papermc.paper.event.player.PlayerStonecutterRecipeSelectEvent;
 import net.kyori.adventure.text.Component;
-import net.minecraft.world.level.block.CrafterBlock;
-import net.minecraft.world.level.block.FurnaceBlock;
-import net.minecraft.world.level.block.StonecutterBlock;
-import net.minecraft.world.level.block.entity.CrafterBlockEntity;
+import net.minecraft.world.inventory.AnvilMenu;
 import org.bukkit.Bukkit;
-import org.bukkit.block.Crafter;
-import org.bukkit.craftbukkit.inventory.util.CraftTileInventoryConverter;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.CrafterCraftEvent;
-import org.bukkit.event.inventory.CraftItemEvent;
-import org.bukkit.event.inventory.PrepareAnvilEvent;
-import org.bukkit.event.inventory.PrepareItemCraftEvent;
-import org.bukkit.event.inventory.PrepareSmithingEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class CraftEventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -39,6 +31,15 @@ public class CraftEventListener implements Listener {
         if (item == null)
             return;
         item.onCraftByPlayer(result, player.getWorld(), player);
+
+        // TODO: Add Recipe Remainders to this
+        ItemStack[] copyMatrix = event.getInventory().getMatrix().clone();
+        for (ItemStack matrix : copyMatrix) {
+            if(matrix == null)
+                continue;
+        }
+        event.getInventory().setMatrix(copyMatrix);
+        Bukkit.getServer().broadcast(Component.text(String.join(", ", Arrays.stream(event.getInventory().getMatrix()).filter(Objects::nonNull).map(stack -> String.valueOf(stack.getAmount())).toList())));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -60,11 +61,11 @@ public class CraftEventListener implements Listener {
 
         CustomCraftingInput craftingInput = new CustomCraftingInput(width, height, input);
 
-        for (CustomRecipe customRecipe : PaperModAPI.CustomRecipes) {
-            if (!(customRecipe instanceof CustomCraftingRecipe))
+        for (CustomRecipe<?> customRecipe : PaperModAPI.CustomRecipes) {
+            if (!(customRecipe instanceof CustomCraftingRecipe craftingRecipe))
                 continue;
-            if (customRecipe.matches(craftingInput)) {
-                event.getInventory().setResult(customRecipe.assemble(craftingInput));
+            if (craftingRecipe.matches(craftingInput)) {
+                event.getInventory().setResult(craftingRecipe.assemble(craftingInput));
                 return;
             }
         }
@@ -73,31 +74,39 @@ public class CraftEventListener implements Listener {
             event.getInventory().setResult(ItemStack.empty());
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPrepareAnvil(PrepareAnvilEvent event) {
-
-    }
+//    @EventHandler(priority = EventPriority.HIGHEST)
+//    public void onPrepareAnvil(PrepareAnvilEvent event) {
+//        AnvilInventory inventory = event.getInventory();
+//        CustomAnvilRecipeInput anvilInput = new CustomAnvilRecipeInput(inventory.getFirstItem(), inventory.getSecondItem());
+//
+//        inventory.setResult(ItemStack.of(Material.IRON_INGOT));
+////        for (CustomRecipe<?> customRecipe : PaperModAPI.CustomRecipes) {
+////            if (!(customRecipe instanceof CustomAnvilRecipe anvilRecipe))
+////                continue;
+////            if (anvilRecipe.matches(anvilInput)) {
+////                //inventory.getViewers().forEach(humanEntity -> humanEntity.sendMessage("TEST"));
+////                //anvilRecipe.assemble(anvilInput)
+////                inventory.setResult(ItemStack.of(Material.STRING));
+////                return;
+////            }
+////        }
+//    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPrepareSmithing(PrepareSmithingEvent event) {
         SmithingInventory inventory = event.getInventory();
         CustomSmithingRecipeInput smithingInput = new CustomSmithingRecipeInput(inventory.getInputTemplate(), inventory.getInputEquipment(), inventory.getInputMineral());
 
-        for (CustomRecipe customRecipe : PaperModAPI.CustomRecipes) {
-            if (!(customRecipe instanceof CustomSmithingRecipe))
+        for (CustomRecipe<?> customRecipe : PaperModAPI.CustomRecipes) {
+            if (!(customRecipe instanceof CustomSmithingRecipe smithingRecipe))
                 continue;
-            if (customRecipe.matches(smithingInput)) {
-                event.getInventory().setResult(customRecipe.assemble(smithingInput));
+            if (smithingRecipe.matches(smithingInput)) {
+                event.getInventory().setResult(smithingRecipe.assemble(smithingInput));
                 return;
             }
         }
 
         if (smithingInput.anyCustom())
             event.getInventory().setResult(ItemStack.empty());
-    }
-
-    @EventHandler
-    public void onPlayerStonecutterRecipeSelect(PlayerStonecutterRecipeSelectEvent event) {
-
     }
 }

@@ -1,5 +1,6 @@
 package de.cjdev.papermodapi.api.recipe;
 
+import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItems;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;

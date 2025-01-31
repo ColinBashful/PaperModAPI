@@ -10,37 +10,37 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public class CustomSmithingTransformRecipe implements CustomSmithingRecipe {
-    private final CustomRecipeChoice template;
-    private final CustomRecipeChoice base;
-    private final CustomRecipeChoice addition;
+    private final Optional<CustomIngredient> template;
+    private final Optional<CustomIngredient> base;
+    private final Optional<CustomIngredient> addition;
     private final ItemStack result;
 
     final boolean copyDataComponents;
 
-    public CustomSmithingTransformRecipe(CustomRecipeChoice template, CustomRecipeChoice base, CustomRecipeChoice addition, @NotNull ItemStack result, boolean copyDataComponents) {
+    public CustomSmithingTransformRecipe(@Nullable CustomIngredient template, @Nullable CustomIngredient base, @Nullable CustomIngredient addition, @NotNull ItemStack result, boolean copyDataComponents) {
         this.copyDataComponents = copyDataComponents;
-        this.template = template == null ? CustomRecipeChoice.empty() : template;
-        this.base = base == null ? CustomRecipeChoice.empty() : base;
-        this.addition = addition == null ? CustomRecipeChoice.empty() : addition;
+        this.template = Optional.ofNullable(template);
+        this.base = Optional.ofNullable(base);
+        this.addition = Optional.ofNullable(addition);
         this.result = result;
     }
 
-    public CustomSmithingTransformRecipe(CustomRecipeChoice template, CustomRecipeChoice base, CustomRecipeChoice addition, @NotNull CustomItem result, boolean copyDataComponents) {
+    public CustomSmithingTransformRecipe(@Nullable CustomIngredient template, @Nullable CustomIngredient base, @Nullable CustomIngredient addition, @NotNull CustomItem result, boolean copyDataComponents) {
         this(template, base, addition, result.getDefaultStack(), copyDataComponents);
     }
 
-    public CustomSmithingTransformRecipe(CustomRecipeChoice template, CustomRecipeChoice base, CustomRecipeChoice addition, @NotNull ItemStack result){
+    public CustomSmithingTransformRecipe(@Nullable CustomIngredient template, @Nullable CustomIngredient base, @Nullable CustomIngredient addition, @NotNull ItemStack result){
         this(template, base, addition, result, true);
     }
 
-    public CustomSmithingTransformRecipe(CustomRecipeChoice template, CustomRecipeChoice base, CustomRecipeChoice addition, @NotNull CustomItem result){
+    public CustomSmithingTransformRecipe(@Nullable CustomIngredient template, @Nullable CustomIngredient base, @Nullable CustomIngredient addition, @NotNull CustomItem result){
         this(template, base, addition, result, true);
     }
 
     @Override
     public @NotNull ItemStack assemble(@NotNull CustomSmithingRecipeInput smithingInput) {
-        net.minecraft.world.item.ItemStack nmsResult = CraftItemStack.asNMSCopy(this.result);
-        net.minecraft.world.item.ItemStack itemStack = CraftItemStack.asNMSCopy(smithingInput.base()).transmuteCopy(nmsResult.getItem(), nmsResult.getCount());
+        net.minecraft.world.item.ItemStack nmsResult = CraftItemStack.unwrap(this.result);
+        net.minecraft.world.item.ItemStack itemStack = CraftItemStack.unwrap(smithingInput.base()).transmuteCopy(nmsResult.getItem(), nmsResult.getCount());
         if (this.copyDataComponents) {
             itemStack.applyComponents(nmsResult.getComponentsPatch());
         }
@@ -49,18 +49,18 @@ public class CustomSmithingTransformRecipe implements CustomSmithingRecipe {
     }
 
     @Override
-    public Optional<CustomRecipeChoice> templateIngredient() {
-        return Optional.empty();
+    public Optional<CustomIngredient> templateIngredient() {
+        return this.template;
     }
 
     @Override
-    public Optional<CustomRecipeChoice> baseIngredient() {
-        return Optional.empty();
+    public Optional<CustomIngredient> baseIngredient() {
+        return this.base;
     }
 
     @Override
-    public Optional<CustomRecipeChoice> additionIngredient() {
-        return Optional.empty();
+    public Optional<CustomIngredient> additionIngredient() {
+        return this.addition;
     }
 
     @Override

@@ -2,16 +2,10 @@ package de.cjdev.papermodapi.api.item;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import de.cjdev.papermodapi.PaperModAPI;
-import net.kyori.adventure.key.Key;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.CustomData;
-import org.bukkit.Bukkit;
+import de.cjdev.papermodapi.api.component.CustomDataComponents;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -40,14 +34,14 @@ public class CustomItems {
 //        }
 
         if(items.containsKey(key)){
-            PaperModAPI.LOGGER.warning(key.toString() + " has already been registered.");
+            PaperModAPI.LOGGER.warning("[Item] " + key.toString() + " has already been registered.");
             return items.get(key);
         }
         items.put(key, item);
         return item;
     }
 
-    public static @Nullable CustomItem getItemByKey(Key key) {
+    public static @Nullable CustomItem getItemByKey(NamespacedKey key) {
         return items.get(key);
     }
 
@@ -60,15 +54,11 @@ public class CustomItems {
     }
 
     public static boolean isCustomStack(ItemStack stack) {
-        return getKeyByStack(stack) != null;
+        return CustomDataComponents.ITEM_COMPONENT.has(stack);
     }
 
     public static @Nullable NamespacedKey getKeyByStack(ItemStack stack) {
-        CustomData customData = net.minecraft.world.item.ItemStack.fromBukkitCopy(stack).get(DataComponents.CUSTOM_DATA);
-        if(customData == null || !customData.contains("papermodapi:item"))
-            return null;
-        DataResult<String> customItemId = customData.read(Codec.STRING.fieldOf("papermodapi:item"));
-        return NamespacedKey.fromString(customItemId.mapOrElse(pair -> pair, stringError -> null), PaperModAPI.getPlugin());
+        return CustomDataComponents.ITEM_COMPONENT.get(stack);
     }
 
     public static List<ItemStack> getItemStacks(){

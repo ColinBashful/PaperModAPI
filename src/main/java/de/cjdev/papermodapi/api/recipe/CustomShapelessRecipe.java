@@ -14,7 +14,7 @@ public class CustomShapelessRecipe implements CustomCraftingRecipe {
     private @NotNull String group = "";
     private CraftingBookCategory category = CraftingBookCategory.MISC;
     private final ItemStack result;
-    private final List<CustomRecipeChoice> ingredients;
+    private final List<CustomIngredient> ingredients;
 
     public CustomShapelessRecipe(@NotNull ItemStack result) {
         this.result = result;
@@ -39,31 +39,43 @@ public class CustomShapelessRecipe implements CustomCraftingRecipe {
         return this;
     }
 
-    public CustomShapelessRecipe addIngredient(@NotNull CustomRecipeChoice recipeChoice){
+    public CustomShapelessRecipe addIngredient(@NotNull CustomIngredient recipeChoice){
         ingredients.add(recipeChoice);
         return this;
     }
 
+    public CustomShapelessRecipe addIngredient(@NotNull NamespacedKey key){
+        ingredients.add(new CustomIngredient(key));
+        return this;
+    }
+
+    public CustomShapelessRecipe addIngredient(int count, @NotNull NamespacedKey key) {
+        while (count-- > 0) {
+            this.ingredients.add(new CustomIngredient(key));
+        }
+        return this;
+    }
+
     public CustomShapelessRecipe addIngredient(@NotNull Material material){
-        ingredients.add(new CustomRecipeChoice.MaterialChoice(material));
+        ingredients.add(new CustomIngredient(material));
         return this;
     }
 
     public CustomShapelessRecipe addIngredient(int count, @NotNull Material material) {
         while (count-- > 0) {
-            this.ingredients.add(new CustomRecipeChoice.MaterialChoice(Collections.singletonList(material)));
+            this.ingredients.add(new CustomIngredient(material));
         }
         return this;
     }
 
     public CustomShapelessRecipe addIngredient(@NotNull CustomItem customItem){
-        ingredients.add(new CustomRecipeChoice.CustomItemChoice(customItem));
+        ingredients.add(new CustomIngredient(customItem));
         return this;
     }
 
     public CustomShapelessRecipe addIngredient(int count, @NotNull CustomItem customItem) {
         while (count-- > 0) {
-            this.ingredients.add(new CustomRecipeChoice.CustomItemChoice(Collections.singletonList(customItem)));
+            this.ingredients.add(new CustomIngredient(customItem));
         }
         return this;
     }
@@ -87,7 +99,7 @@ public class CustomShapelessRecipe implements CustomCraftingRecipe {
 
             boolean[] matched = new boolean[craftingInput.ingredientCount()];
 
-            for (CustomRecipeChoice ingredient : this.ingredients) {
+            for (CustomIngredient ingredient : this.ingredients) {
                 boolean foundMatch = false;
 
                 for (int i = 0; i < remainingItems.size(); i++) {

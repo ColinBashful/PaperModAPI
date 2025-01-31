@@ -1,6 +1,7 @@
 package de.cjdev.papermodapi.init;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.inventory.CustomCreativeInventory;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
@@ -25,7 +26,7 @@ public class CommandInit {
             }).executes(ctx -> {
                 if (!(ctx.getSource().getExecutor() instanceof Player player))
                     return 0;
-                player.openInventory(new CustomCreativeInventory(plugin, player.isOp(), null).getInventory());
+                player.openInventory(PaperModAPI.CUSTOM_CREATIVE_INVENTORY.apply(player.isOp()).getInventory());
                 return 1;
             }).build());
 

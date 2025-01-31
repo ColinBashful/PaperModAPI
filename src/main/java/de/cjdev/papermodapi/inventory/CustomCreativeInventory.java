@@ -1,6 +1,7 @@
 package de.cjdev.papermodapi.inventory;
 
 import de.cjdev.papermodapi.api.itemgroup.CustomItemGroup;
+import de.cjdev.papermodapi.api.itemgroup.CustomItemGroups;
 import de.cjdev.papermodapi.helper.PlayerHeadHelper;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -33,7 +34,7 @@ public class CustomCreativeInventory implements InventoryHolder {
             this.items = selectedItemGroup.getDisplayStacks().stream().toList();
         }else {
             this.inventory = plugin.getServer().createInventory(this, 9*6, Component.text("Custom Items"));
-            this.items = CustomItemGroup.getItemGroups().stream().map(itemGroup -> {
+            this.items = CustomItemGroups.getItemGroups().stream().map(itemGroup -> {
                 ItemStack iconStack = itemGroup.iconSupplier.get();
                 iconStack.editMeta(itemMeta -> itemMeta.itemName(itemGroup.displayName));
                 return iconStack;
@@ -84,24 +85,26 @@ public class CustomCreativeInventory implements InventoryHolder {
         if (uiClick && clickedSlot >= validInventorySize) {
             event.setCancelled(true);
             if (clickedSlot == validInventorySize && page > 0) {
-                page--;
+                --page;
                 refresh();
             } else if (clickedSlot == inventory.getSize() - 5 && selectedItemGroup != null) {
                 player.openInventory(new CustomCreativeInventory(plugin, player.isOp(), null).getInventory());
+                this.inventory.close();
             } else if (clickedSlot == inventory.getSize() - 1 && page < maxPage) {
-                page++;
+                ++page;
                 refresh();
             }
             return;
         }
 
-        if (selectedItemGroup == null) {
+        if (uiClick && selectedItemGroup == null) {
             event.setCancelled(true);
-            List<CustomItemGroup> itemGroups = CustomItemGroup.getItemGroups();
+            List<CustomItemGroup> itemGroups = CustomItemGroups.getItemGroups();
             int clickedItemGroup = page * validInventorySize + event.getSlot();
             if (clickedItemGroup > itemGroups.size())
                 return;
             player.openInventory(new CustomCreativeInventory(plugin, player.isOp(), itemGroups.get(clickedItemGroup)).getInventory());
+            this.inventory.close();
             return;
         }
 

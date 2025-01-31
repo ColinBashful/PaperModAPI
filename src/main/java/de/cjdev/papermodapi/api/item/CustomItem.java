@@ -1,6 +1,13 @@
 package de.cjdev.papermodapi.api.item;
 
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.codecs.PrimitiveCodec;
 import de.cjdev.papermodapi.PaperModAPI;
+import de.cjdev.papermodapi.api.component.CustomDataComponent;
+import de.cjdev.papermodapi.api.component.CustomDataComponents;
 import de.cjdev.papermodapi.api.util.ActionResult;
 import de.cjdev.papermodapi.api.util.ItemUsageContext;
 import de.cjdev.papermodapi.api.util.Util;
@@ -14,12 +21,7 @@ import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.world.item.component.CustomData;
 import org.bukkit.*;
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
@@ -28,16 +30,16 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
-import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class CustomItem {
-//    public static final Map<CustomBlock, CustomItem> BLOCK_ITEMS = Maps.newHashMap();
+    //    public static final Map<CustomBlock, CustomItem> BLOCK_ITEMS = Maps.newHashMap();
     public static final int DEFAULT_MAX_COUNT = 64;
     public static final int MAX_MAX_COUNT = 99;
     public static final int ITEM_BAR_STEPS = 13;
@@ -45,18 +47,18 @@ public class CustomItem {
     private final boolean dyeable;
     private final Map<DataComponentType, Object> components;
     @Nullable
-    private final Function<ItemStack, ItemStack> recipeRemainder;
+    private final Consumer<ItemStack> recipeRemainder;
     @Nullable
     private final String translationKey;
 
     private final ItemStack defaultStack;
     private final ItemStack displayStack;
 
-    public static @Nullable NamespacedKey getId(CustomItem item){
+    public static @Nullable NamespacedKey getId(CustomItem item) {
         return item == null ? null : CustomItems.getKeyByItem(item);
     }
 
-    public static @Nullable CustomItem byId(Key key){
+    public static @Nullable CustomItem byId(NamespacedKey key) {
         return key == null ? null : CustomItems.getItemByKey(key);
     }
 
@@ -78,26 +80,25 @@ public class CustomItem {
         displayStack.editMeta(itemMeta -> itemMeta.setItemModel(itemId));
 
         this.components.forEach((type, o) -> {
-            if(type == DataComponentTypes.CUSTOM_MODEL_DATA){
+            if (type == DataComponentTypes.CUSTOM_MODEL_DATA) {
                 displayStack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, (CustomModelData) this.components.get(DataComponentTypes.CUSTOM_MODEL_DATA));
             }
-            if(type == DataComponentTypes.USE_COOLDOWN){
+            if (type == DataComponentTypes.USE_COOLDOWN) {
                 defaultStack.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(((UseCooldown) o).seconds()).cooldownGroup(itemId).build());
                 return;
             }
-            if(type instanceof DataComponentType.Valued valued)
+            if (type instanceof DataComponentType.Valued valued)
                 defaultStack.setData(valued, o);
             else if (type instanceof DataComponentType.NonValued nonValued) {
                 defaultStack.setData(nonValued);
             }
         });
 
-        CompoundTag customData = new CompoundTag();
-        customData.putString("papermodapi:item", itemId.asString());
-        net.minecraft.world.item.ItemStack nmsStack = net.minecraft.world.item.ItemStack.fromBukkitCopy(defaultStack);
-        nmsStack.set(DataComponents.CUSTOM_DATA, CustomData.of(customData));
+        Map<CustomDataComponent, ?> customData = settings.getCustomComponents();
+        customData.forEach((customDataComponent, o) -> customDataComponent.set(defaultStack, o));
+        CustomDataComponents.ITEM_COMPONENT.set(defaultStack, itemId);
 
-        this.defaultStack = nmsStack.getBukkitStack();
+        this.defaultStack = defaultStack;
         this.displayStack = displayStack;
     }
 
@@ -105,9 +106,13 @@ public class CustomItem {
         return this.defaultStack.clone();
     }
 
-    ///
+    public final boolean isSimilar(@Nullable ItemStack stack) {
+        if (stack == null || stack.isEmpty())
+            return false;
+        return CustomItems.getKeyByStack(stack) == getId(this);
+    }
+
     /// Simply returns the DefaultStack without the unnecessary components
-    ///
     public final ItemStack getDisplayStack() {
         return this.displayStack.clone();
     }
@@ -124,11 +129,11 @@ public class CustomItem {
         return stack == null ? Component.empty() : stack.getDataOrDefault(DataComponentTypes.ITEM_NAME, Component.empty());
     }
 
-    public @Nullable ItemStack getRecipeRemainder(ItemStack stack) {
-        return this.recipeRemainder == null ? null : this.recipeRemainder.apply(stack);
+    public @Nullable Consumer<ItemStack> getRecipeRemainder() {
+        return this.recipeRemainder;
     }
 
-    public Key getBreakSound(){
+    public Key getBreakSound() {
         return Key.key("minecraft", "entity.item.break");
     }
 
@@ -140,7 +145,7 @@ public class CustomItem {
         return this.translationKey;
     }
 
-    public ActionResult useOnBlock(ItemUsageContext context){
+    public ActionResult useOnBlock(ItemUsageContext context) {
         return ActionResult.PASS;
     }
 
@@ -148,55 +153,68 @@ public class CustomItem {
         return ActionResult.PASS;
     }
 
-    public ActionResult use(World world, Player player, EquipmentSlot hand){
+    public ActionResult use(World world, Player player, EquipmentSlot hand) {
         return ActionResult.PASS;
     }
 
-    public void usageTick(World world, LivingEntity user, ItemStack stack, int ticksHeldFor) {}
+    public void usageTick(World world, LivingEntity user, ItemStack stack, int ticksHeldFor) {
+    }
 
     public boolean onStoppedUsing(ItemStack stack, World world, LivingEntity user, int ticksHeldFor) {
         return false;
     }
 
-    public void onCraft(ItemStack stack, World world) {}
+    public void onCraft(ItemStack stack, World world) {
+    }
 
-    public void onCraftByPlayer(ItemStack stack, World world, Player player) {}
+    public void onCraftByPlayer(ItemStack stack, World world, Player player) {
+    }
 
-    public void onItemEntityDestroyed(Item entity) {}
+    public void onItemEntityDestroyed(Item entity) {
+    }
+
+    public static boolean sameItem(ItemStack stack, ItemStack otherStack) {
+        if (stack == null || otherStack == null || stack.isEmpty() == otherStack.isEmpty())
+            return false;
+        NamespacedKey item = CustomDataComponents.ITEM_COMPONENT.get(stack);
+        NamespacedKey otherItem = CustomDataComponents.ITEM_COMPONENT.get(otherStack);
+        return item == otherItem;
+    }
 
     public static class Settings {
         private static final Function<Key, String> BLOCK_PREFIXED_TRANSLATION_KEY = id -> Util.createTranslationKey("block", id);
         private static final Function<Key, String> ITEM_PREFIXED_TRANSLATION_KEY = id -> Util.createTranslationKey("item", id);
         private @NotNull Material baseMaterial;
         private boolean dyeable;
-        private @Nullable Function<ItemStack, ItemStack> recipeRemainder;
+        private @Nullable Consumer<ItemStack> recipeRemainder;
         private final Map<DataComponentType, Object> components = new HashMap<>();
+        private final Map<CustomDataComponent, Object> customComponents = new HashMap<>();
         private NamespacedKey registryKey;
         private Function<Key, String> translationKey;
         private Function<CustomItem, Key> modelId;
         private @Nullable NamespacedKey repairable;
 
-        public Settings(){
+        public Settings() {
             this.baseMaterial = Material.PAPER;
             this.dyeable = false;
             this.translationKey = ITEM_PREFIXED_TRANSLATION_KEY;
             this.modelId = CustomItem::getId;
         }
 
-        public Settings dyeable(){
+        public Settings dyeable() {
             this.dyeable = true;
             return this;
         }
 
-        public Settings food(FoodProperties food){
+        public Settings food(FoodProperties food) {
             return this.food(food, Consumable.consumable().build());
         }
 
-        public Settings food(FoodProperties food, Consumable consumable){
+        public Settings food(FoodProperties food, Consumable consumable) {
             return this.component(DataComponentTypes.FOOD, food).component(DataComponentTypes.CONSUMABLE, consumable);
         }
 
-        public Settings useRemainder(ItemStack convertInto){
+        public Settings useRemainder(ItemStack convertInto) {
             return this.component(DataComponentTypes.USE_REMAINDER, UseRemainder.useRemainder(convertInto));
         }
 
@@ -204,23 +222,23 @@ public class CustomItem {
             return this.component(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(seconds).build());
         }
 
-        public Settings maxCount(int maxCount){
+        public Settings maxCount(int maxCount) {
             return this.component(DataComponentTypes.MAX_STACK_SIZE, maxCount);
         }
 
-        public Settings maxDamage(int maxDamage){
+        public Settings maxDamage(int maxDamage) {
             this.component(DataComponentTypes.MAX_DAMAGE, maxDamage);
             this.component(DataComponentTypes.MAX_STACK_SIZE, 1);
             this.component(DataComponentTypes.DAMAGE, 0);
             return this;
         }
 
-        public Settings recipeRemainder(Function<ItemStack, ItemStack> recipeRemainder){
+        public Settings recipeRemainder(Consumer<ItemStack> recipeRemainder) {
             this.recipeRemainder = recipeRemainder;
             return this;
         }
 
-        public Settings rarity(ItemRarity rarity){
+        public Settings rarity(ItemRarity rarity) {
             return this.component(DataComponentTypes.RARITY, rarity);
         }
 
@@ -228,31 +246,31 @@ public class CustomItem {
             return this.component(DataComponentTypes.DAMAGE_RESISTANT, DamageResistant.damageResistant(DamageTypeTagKeys.IS_FIRE));
         }
 
-        public Settings jukeboxPlayable(JukeboxSong songKey){
+        public Settings jukeboxPlayable(JukeboxSong songKey) {
             return this.component(DataComponentTypes.JUKEBOX_PLAYABLE, JukeboxPlayable.jukeboxPlayable(songKey).build());
         }
 
-        public Settings enchantable(int enchantability){
+        public Settings enchantable(int enchantability) {
             return this.component(DataComponentTypes.ENCHANTABLE, Enchantable.enchantable(enchantability));
         }
 
-        public Settings repairable(Material repairIngredient){
+        public Settings repairable(Material repairIngredient) {
             return this.component(DataComponentTypes.REPAIRABLE, Repairable.repairable(RegistrySet.keySet(RegistryKey.ITEM, TypedKey.create(RegistryKey.ITEM, repairIngredient.getKey()))));
         }
 
-        public Settings repairable(RegistryKeySet<ItemType> repairIngredientsTag){
+        public Settings repairable(RegistryKeySet<ItemType> repairIngredientsTag) {
             return this.component(DataComponentTypes.REPAIRABLE, Repairable.repairable(repairIngredientsTag));
         }
 
-        public Settings equippable(EquipmentSlot slot){
+        public Settings equippable(EquipmentSlot slot) {
             return this.component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).build());
         }
 
-        public Settings equippableUnswappable(EquipmentSlot slot){
+        public Settings equippableUnswappable(EquipmentSlot slot) {
             return this.component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).swappable(false).build());
         }
 
-        public Settings registryKey(NamespacedKey registryKey){
+        public Settings registryKey(NamespacedKey registryKey) {
             this.registryKey = registryKey;
             return this;
         }
@@ -262,7 +280,11 @@ public class CustomItem {
             return this;
         }
 
-        public boolean canDye(){
+        public Settings fuel(int fuelTicks){
+            return this.component(CustomDataComponents.FUEL_COMPONENT, fuelTicks);
+        }
+
+        public boolean canDye() {
             return this.dyeable;
         }
 
@@ -283,13 +305,22 @@ public class CustomItem {
             return this.modelId.apply(CustomItems.getItemByKey(registryKey));
         }
 
-        public Settings component(DataComponentType.NonValued type){
+        private Map<CustomDataComponent, ?> getCustomComponents() {
+            return this.customComponents;
+        }
+
+        public Settings component(DataComponentType.NonValued type) {
             this.components.put(type, true);
             return this;
         }
 
-        public <T> Settings component(DataComponentType.Valued<T> type, T value){
+        public <T> Settings component(DataComponentType.Valued<T> type, T value) {
             this.components.put(type, value);
+            return this;
+        }
+
+        public <T> Settings component(CustomDataComponent<T> type, T value) {
+            customComponents.put(type, value);
             return this;
         }
 
@@ -299,9 +330,9 @@ public class CustomItem {
 
         Map<DataComponentType, Object> getValidatedComponents(Component name, Key modelId) {
             Map<DataComponentType, Object> componentMap = this.components;
-            if(name != null)
+            if (name != null)
                 componentMap.put(DataComponentTypes.ITEM_NAME, name);
-            if(modelId != null)
+            if (modelId != null)
                 componentMap.put(DataComponentTypes.ITEM_MODEL, modelId);
             if (componentMap.containsKey(DataComponentTypes.DAMAGE) && (Integer) componentMap.getOrDefault(DataComponentTypes.MAX_STACK_SIZE, 1) > 1) {
                 throw new IllegalStateException("Item cannot have both durability and be stackable");
@@ -311,7 +342,7 @@ public class CustomItem {
         }
     }
 
-    static {
-        //BLOCK_ITEMS = Maps.newHashMap();
-    }
+    //static {
+    //    BLOCK_ITEMS = Maps.newHashMap();
+    //}
 }

@@ -6,6 +6,7 @@ import io.papermc.paper.datacomponent.item.Equippable;
 import io.papermc.paper.datacomponent.item.ItemAttributeModifiers;
 import io.papermc.paper.registry.set.RegistryKeySet;
 import net.kyori.adventure.key.Key;
+import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.equipment.ArmorType;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
@@ -28,20 +29,27 @@ public record CustomArmorMaterial(
         RegistryKeySet<@NotNull ItemType> repairIngredient,
         Key modelId
 ) {
-    public CustomItem.Settings humanoidProperties(CustomItem.Settings settings, EquipmentSlot equipmentType) {
+    public CustomItem.Settings humanoidProperties(CustomItem.Settings settings, EquipmentSlot equipmentType, boolean overrideModel) {
         ArmorType armorType = switch (equipmentType){
             case FEET -> ArmorType.BOOTS;
             case LEGS -> ArmorType.LEGGINGS;
             case CHEST -> ArmorType.CHESTPLATE;
             case HEAD -> ArmorType.HELMET;
             case BODY -> ArmorType.BODY;
-            default -> throw new NullPointerException();
+            default -> throw new IllegalArgumentException();
         };
+        Equippable.Builder equippable = Equippable.equippable(equipmentType).equipSound(this.equipSound);
+        if(overrideModel)
+            equippable.assetId(this.modelId);
         return settings.maxDamage(armorType.getDurability(this.durability))
                 .attributeModifiers(this.createAttributes(armorType, equipmentType))
                 .enchantable(this.enchantmentValue)
-                .component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(equipmentType).equipSound(this.equipSound).assetId(this.modelId).build())
+                .component(DataComponentTypes.EQUIPPABLE, equippable.build())
                 .repairable(this.repairIngredient);
+    }
+
+    public CustomItem.Settings humanoidProperties(CustomItem.Settings settings, EquipmentSlot equipmentType) {
+        return this.humanoidProperties(settings, equipmentType, true);
     }
 
     public CustomItem.Settings animalProperties(CustomItem.Settings settings, RegistryKeySet<@NotNull EntityType> allowedEntities) {
@@ -76,7 +84,6 @@ public record CustomArmorMaterial(
     private ItemAttributeModifiers createAttributes(ArmorType equipmentType, EquipmentSlot slot) {
         int i = this.defense.getOrDefault(equipmentType, 0);
         ItemAttributeModifiers.Builder builder = ItemAttributeModifiers.itemAttributes();
-        EquipmentSlotGroup equipmentSlotGroup = slot.getGroup();
         NamespacedKey key = NamespacedKey.minecraft("armor." + equipmentType.getName());
         builder.addModifier(Attribute.ARMOR, new AttributeModifier(key, i, AttributeModifier.Operation.ADD_NUMBER), slot.getGroup());
         builder.addModifier(
