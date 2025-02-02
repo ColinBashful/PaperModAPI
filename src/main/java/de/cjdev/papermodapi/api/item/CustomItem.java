@@ -1,11 +1,5 @@
 package de.cjdev.papermodapi.api.item;
 
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.codecs.PrimitiveCodec;
-import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.component.CustomDataComponent;
 import de.cjdev.papermodapi.api.component.CustomDataComponents;
 import de.cjdev.papermodapi.api.util.ActionResult;
@@ -66,7 +60,7 @@ public class CustomItem {
         this.baseMaterial = settings.getBaseMaterial();
         this.dyeable = settings.canDye();
         this.translationKey = settings.getTranslationKey();
-        this.components = settings.getValidatedComponents(Component.translatable(this.translationKey), settings.getModelId());
+        this.components = settings.getValidatedComponents();
         this.recipeRemainder = settings.recipeRemainder;
 
         NamespacedKey itemId = settings.registryKey;
@@ -75,7 +69,7 @@ public class CustomItem {
 
         defaultStack.editMeta(itemMeta -> {
             itemMeta.itemName(getName());
-            itemMeta.setItemModel(itemId);
+            itemMeta.setItemModel(settings.getModelId());
         });
         displayStack.editMeta(itemMeta -> itemMeta.setItemModel(itemId));
 
@@ -122,7 +116,7 @@ public class CustomItem {
     }
 
     public final Component getName() {
-        return (Component) this.components.getOrDefault(DataComponentTypes.ITEM_NAME, Component.empty());
+        return Component.translatable(this.translationKey);
     }
 
     public Component getName(ItemStack stack) {
@@ -145,15 +139,15 @@ public class CustomItem {
         return this.translationKey;
     }
 
-    public ActionResult useOnBlock(ItemUsageContext context) {
+    public @NotNull ActionResult useOnBlock(ItemUsageContext context) {
         return ActionResult.PASS;
     }
 
-    public ActionResult useOnEntity(ItemStack stack, Player user, Entity entity, EquipmentSlot hand) {
+    public @NotNull ActionResult useOnEntity(ItemStack stack, @Nullable Player user, Entity entity, EquipmentSlot hand) {
         return ActionResult.PASS;
     }
 
-    public ActionResult use(World world, Player player, EquipmentSlot hand) {
+    public @NotNull ActionResult use(World world, Player player, EquipmentSlot hand) {
         return ActionResult.PASS;
     }
 
@@ -173,6 +167,9 @@ public class CustomItem {
     public void onItemEntityDestroyed(Item entity) {
     }
 
+    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+    }
+
     public static boolean sameItem(ItemStack stack, ItemStack otherStack) {
         if (stack == null || otherStack == null || stack.isEmpty() == otherStack.isEmpty())
             return false;
@@ -182,23 +179,23 @@ public class CustomItem {
     }
 
     public static class Settings {
-        private static final Function<Key, String> BLOCK_PREFIXED_TRANSLATION_KEY = id -> Util.createTranslationKey("block", id);
-        private static final Function<Key, String> ITEM_PREFIXED_TRANSLATION_KEY = id -> Util.createTranslationKey("item", id);
+        private static final Function<NamespacedKey, String> BLOCK_PREFIXED_TRANSLATION_KEY = id -> Util.createTranslationKey("block", id);
+        private static final Function<NamespacedKey, String> ITEM_PREFIXED_TRANSLATION_KEY = id -> Util.createTranslationKey("item", id);
         private @NotNull Material baseMaterial;
         private boolean dyeable;
         private @Nullable Consumer<ItemStack> recipeRemainder;
         private final Map<DataComponentType, Object> components = new HashMap<>();
         private final Map<CustomDataComponent, Object> customComponents = new HashMap<>();
         private NamespacedKey registryKey;
-        private Function<Key, String> translationKey;
-        private Function<CustomItem, Key> modelId;
+        private Function<NamespacedKey, String> translationKey;
+        private Function<NamespacedKey, NamespacedKey> modelId;
         private @Nullable NamespacedKey repairable;
 
         public Settings() {
             this.baseMaterial = Material.PAPER;
             this.dyeable = false;
             this.translationKey = ITEM_PREFIXED_TRANSLATION_KEY;
-            this.modelId = CustomItem::getId;
+            this.modelId = key -> key;
         }
 
         public Settings dyeable() {
@@ -280,10 +277,6 @@ public class CustomItem {
             return this;
         }
 
-        public Settings fuel(int fuelTicks){
-            return this.component(CustomDataComponents.FUEL_COMPONENT, fuelTicks);
-        }
-
         public boolean canDye() {
             return this.dyeable;
         }
@@ -297,12 +290,17 @@ public class CustomItem {
             return this;
         }
 
+        public Settings modelId(NamespacedKey key){
+            this.modelId = customItem -> key;
+            return this;
+        }
+
         private String getTranslationKey() {
             return this.translationKey.apply(this.registryKey);
         }
 
-        private Key getModelId() {
-            return this.modelId.apply(CustomItems.getItemByKey(registryKey));
+        private NamespacedKey getModelId() {
+            return this.modelId.apply(this.registryKey);
         }
 
         private Map<CustomDataComponent, ?> getCustomComponents() {
@@ -328,12 +326,8 @@ public class CustomItem {
             return this.component(DataComponentTypes.ATTRIBUTE_MODIFIERS, attributeModifiers);
         }
 
-        Map<DataComponentType, Object> getValidatedComponents(Component name, Key modelId) {
+        Map<DataComponentType, Object> getValidatedComponents() {
             Map<DataComponentType, Object> componentMap = this.components;
-            if (name != null)
-                componentMap.put(DataComponentTypes.ITEM_NAME, name);
-            if (modelId != null)
-                componentMap.put(DataComponentTypes.ITEM_MODEL, modelId);
             if (componentMap.containsKey(DataComponentTypes.DAMAGE) && (Integer) componentMap.getOrDefault(DataComponentTypes.MAX_STACK_SIZE, 1) > 1) {
                 throw new IllegalStateException("Item cannot have both durability and be stackable");
             } else {

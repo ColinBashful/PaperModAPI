@@ -1,12 +1,7 @@
 package de.cjdev.papermodapi.listener;
 
-import de.cjdev.morepaperevents.api.event.CampfirePlaceItemEvent;
-import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import de.cjdev.papermodapi.api.item.CustomItems;
-import de.cjdev.papermodapi.api.recipe.CustomCookingRecipe;
-import de.cjdev.papermodapi.api.recipe.CustomCookingRecipeInput;
-import de.cjdev.papermodapi.api.recipe.CustomRecipe;
 import de.cjdev.papermodapi.api.util.ActionResult;
 import de.cjdev.papermodapi.api.util.BlockHitResult;
 import de.cjdev.papermodapi.api.util.ItemUsageContext;
@@ -14,10 +9,13 @@ import de.cjdev.papermodapi.api.util.Util;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.UseCooldown;
 import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
-import net.kyori.adventure.text.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -41,27 +39,6 @@ public class PlayerInteractEventListener implements Listener {
 //    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onCampfirePlaceItem(CampfirePlaceItemEvent event) {
-        CustomCookingRecipeInput cookingRecipeInput = new CustomCookingRecipeInput(null, event.getPlaceStack());
-        for (CustomRecipe<?> customRecipe : PaperModAPI.CustomRecipes) {
-            if (!(customRecipe instanceof CustomCookingRecipe customCookingRecipe))
-                continue;
-            if (customCookingRecipe.matches(cookingRecipeInput)) {
-                event.allowPlacing(true);
-                return;
-            }
-        }
-        if (cookingRecipeInput.isCustom())
-            event.allowPlacing(false);
-    }
-
-    ///
-    /// TODO: Fix this somehow
-    ///
-    /// Problem: won't call if right clicked air, 'cause it's cancelled then, but if ignoreCancelled is false, player's will interact even
-    /// if they interacted with an entity at the same time
-    ///
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
 //        Vector oldVector = player.getVelocity();
@@ -76,11 +53,24 @@ public class PlayerInteractEventListener implements Listener {
 
         InteractionResult interactionResult = null;
         if (!player.isSneaking() && event.getClickedBlock() != null && event.getInteractionPoint() != null) {
-            interactionResult = ((CraftWorld) event.getPlayer().getWorld()).getHandle().getBlockState(Util.nmsBlockPos(event.getClickedBlock().getLocation().toBlock())).useWithoutItem(((CraftWorld) player.getWorld()).getHandle(), ((CraftPlayer) player).getHandle(), new BlockHitResult(event.getInteractionPoint(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false).asNMSCopy());
+            net.minecraft.world.entity.player.Player nmsPlayer = ((CraftPlayer)event.getPlayer()).getHandle();
+            Level nmsLevel = nmsPlayer.level();
+            BlockState blockState = nmsLevel.getBlockState(Util.nmsBlockPos(event.getClickedBlock().getLocation().toBlock()));
+            InteractionHand nmsHand = Util.nmsInteractionHand(event.getHand());
+            net.minecraft.world.phys.BlockHitResult nmsBlockHitResult = new BlockHitResult(event.getInteractionPoint(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false).asNMSCopy();
+            net.minecraft.world.item.ItemStack nmsStack;
+            if(event.getItem() == null || (nmsStack = CraftItemStack.unwrap(event.getItem())) == null)
+                interactionResult = blockState.useWithoutItem(((CraftWorld) player.getWorld()).getHandle(), ((CraftPlayer) player).getHandle(), nmsBlockHitResult);
+            else
+                interactionResult = blockState.useItemOn(nmsStack, nmsLevel, nmsPlayer, nmsHand, nmsBlockHitResult);
         }
 
-        if (interactionResult != null && interactionResult.consumesAction())
+        if (interactionResult != null && interactionResult.consumesAction()){
+            event.setCancelled(true);
+            if(event.getHand() != null)
+                event.getPlayer().swingHand(event.getHand());
             return;
+        }
 
         if (event.getHand() == null || event.getItem() == null)
             return;
@@ -233,6 +223,7 @@ public class PlayerInteractEventListener implements Listener {
         CustomItem customItem = CustomItems.getItemByStack(stack);
         if (customItem == null)
             return;
-        customItem.useOnEntity(stack, event.getPlayer(), event.getRightClicked(), event.getHand());
+        if(customItem.useOnEntity(stack, event.getPlayer(), event.getRightClicked(), event.getHand()).shouldSwingHand())
+            event.getPlayer().swingHand(event.getHand());
     }
 }
