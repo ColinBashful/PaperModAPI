@@ -14,7 +14,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 public class CustomCreativeInventory implements InventoryHolder {
@@ -61,18 +60,17 @@ public class CustomCreativeInventory implements InventoryHolder {
         ItemStack placeholder = ItemStack.of(Material.GRAY_STAINED_GLASS_PANE);
         placeholder.editMeta(itemMeta -> itemMeta.setHideTooltip(true));
 
-        int validInventorySize = inventory.getSize() - 9;
-        for (int i = this.inventory.getSize() - 9; i < this.inventory.getSize(); i++)
-            this.inventory.setItem(i, placeholder);
+        final int validInventorySize = inventory.getSize() - 9;
+        IntStream.range(validInventorySize, this.inventory.getSize()).forEach(value -> inventory.setItem(value, placeholder));
         if (selectedItemGroup != null)
-            this.inventory.setItem(this.inventory.getSize() - 5, backButton);
+            inventory.setItem(this.inventory.getSize() - 5, backButton);
         if (page != 0)
-            this.inventory.setItem(this.inventory.getSize() - 9, leftArrow);
+            inventory.setItem(this.inventory.getSize() - 9, leftArrow);
         if (page < maxPage)
-            this.inventory.setItem(this.inventory.getSize() - 1, rightArrow);
+            inventory.setItem(this.inventory.getSize() - 1, rightArrow);
 
-        IntStream.range(validInventorySize * page, Math.min(validInventorySize * (page + 1), items.size()))
-                .forEach(i -> this.inventory.setItem(i % validInventorySize, items.get(i)));
+        IntStream.range(validInventorySize * page, Math.min(validInventorySize * page + validInventorySize, items.size()))
+                .forEach(value -> inventory.setItem(value % validInventorySize, items.get(value)));
     }
 
     public void onClickEvent(InventoryClickEvent event) {
@@ -108,9 +106,9 @@ public class CustomCreativeInventory implements InventoryHolder {
             return;
         }
 
-        boolean sameStack = Optional.ofNullable(event.getCurrentItem()).orElse(ItemStack.empty()).isSimilar(event.getCursor()); // Gave an error if empty, so I did this ;3
-        boolean emptyCursor = event.getCursor().isEmpty();
         ItemStack currentItem = event.getCurrentItem();
+        boolean sameStack = currentItem != null && currentItem.isSimilar(event.getCursor()); // Gave an error if empty, so I did this ;3
+        boolean emptyCursor = event.getCursor().isEmpty();
 
         switch (event.getClick()) {
             case DOUBLE_CLICK:
@@ -119,6 +117,7 @@ public class CustomCreativeInventory implements InventoryHolder {
             case SHIFT_LEFT, SHIFT_RIGHT:
                 if (uiClick) {
                     if (emptyCursor) {
+                        assert currentItem != null;
                         event.getView().setCursor(currentItem.asQuantity(currentItem.getMaxStackSize()));
                     } else {
                         event.getView().setCursor(sameStack ? currentItem.asQuantity(currentItem.getMaxStackSize()) : ItemStack.empty());
@@ -133,12 +132,14 @@ public class CustomCreativeInventory implements InventoryHolder {
                 if (!uiClick || !emptyCursor)
                     break;
                 event.setCancelled(true);
+                assert currentItem != null;
                 player.getInventory().setItemInOffHand(currentItem.asQuantity(currentItem.getMaxStackSize()));
                 break;
             case NUMBER_KEY:
                 if (!uiClick)
                     break;
                 event.setCancelled(true);
+                assert currentItem != null;
                 player.getInventory().setItem(event.getHotbarButton(), currentItem.asQuantity(currentItem.getMaxStackSize()));
                 return;
             case MIDDLE:

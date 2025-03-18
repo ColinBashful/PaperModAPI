@@ -20,6 +20,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
@@ -152,6 +153,9 @@ public class CustomItem {
     }
 
     public void usageTick(World world, LivingEntity user, ItemStack stack, int ticksHeldFor) {
+    }
+
+    public void onConsumed(PlayerItemConsumeEvent event) {
     }
 
     public boolean onStoppedUsing(ItemStack stack, World world, LivingEntity user, int ticksHeldFor) {

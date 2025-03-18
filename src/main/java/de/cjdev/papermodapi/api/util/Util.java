@@ -70,6 +70,14 @@ public class Util {
         return new BlockPos(position.blockX(), position.blockY(), position.blockZ());
     }
 
+    public static net.minecraft.world.entity.EquipmentSlot nmsEquipmentSlot(EquipmentSlot equipmentSlot){
+        return switch (equipmentSlot) {
+            case HAND -> net.minecraft.world.entity.EquipmentSlot.MAINHAND;
+            case OFF_HAND -> net.minecraft.world.entity.EquipmentSlot.OFFHAND;
+            default -> throw new IllegalStateException("Unexpected value: " + equipmentSlot);
+        };
+    }
+
     public static InteractionHand nmsInteractionHand(EquipmentSlot equipmentSlot){
         return equipmentSlot == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
     }
@@ -89,7 +97,7 @@ public class Util {
         BlockPos blockPos = nmsBlockPos(context.getBlockPos());
 
         // Wth is inside, or rather how is it determined
-        net.minecraft.world.phys.BlockHitResult hitResult = new BlockHitResult(hitSpot, direction, blockPos, false);
+        BlockHitResult hitResult = new BlockHitResult(hitSpot, direction, blockPos, false);
 
         return new UseOnContext(player, hand, hitResult);
     }

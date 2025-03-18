@@ -22,9 +22,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
 
 public class PlayerInteractEventListener implements Listener {
 //    private final List<Player> swingingPlayers = new ArrayList<>();
@@ -61,12 +61,18 @@ public class PlayerInteractEventListener implements Listener {
             net.minecraft.world.item.ItemStack nmsStack;
             if(event.getItem() == null || (nmsStack = CraftItemStack.unwrap(event.getItem())) == null)
                 interactionResult = blockState.useWithoutItem(((CraftWorld) player.getWorld()).getHandle(), ((CraftPlayer) player).getHandle(), nmsBlockHitResult);
-            else
+            else{
                 interactionResult = blockState.useItemOn(nmsStack, nmsLevel, nmsPlayer, nmsHand, nmsBlockHitResult);
+                if(interactionResult.consumesAction()){
+                    if(event.getHand() != null)
+                        event.getPlayer().swingHand(event.getHand());
+                    event.setCancelled(true);
+                    return;
+                }
+            }
         }
 
         if (interactionResult != null && interactionResult.consumesAction()){
-            event.setCancelled(true);
             if(event.getHand() != null)
                 event.getPlayer().swingHand(event.getHand());
             return;
@@ -206,6 +212,15 @@ public class PlayerInteractEventListener implements Listener {
                 return;
             player.setCooldown(stack, (int) (useCooldown.seconds() * 20));
         }
+    }
+
+    @EventHandler
+    public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
+        CustomItem customItem = CustomItems.getItemByStack(event.getItem());
+        if (customItem == null)
+            return;
+
+        customItem.onConsumed(event);
     }
 
     @EventHandler
