@@ -38,6 +38,15 @@ public class CustomDataComponent<T> {
         return customData.read(CODEC.fieldOf(key.asString())).mapOrElse(t -> t, tError -> null);
     }
 
+    public @Nullable T getOrDefault(ItemStack stack, T defaultValue) {
+        if (stack == null)
+            return defaultValue;
+        CustomData customData = CraftItemStack.unwrap(stack).get(DataComponents.CUSTOM_DATA);
+        if (customData == null || !customData.contains(key.asString()))
+            return defaultValue;
+        return customData.read(CODEC.fieldOf(key.asString())).mapOrElse(t -> t, tError -> defaultValue);
+    }
+
     public void set(ItemStack stack, T value) {
         if (stack == null)
             return;
@@ -56,11 +65,20 @@ public class CustomDataComponent<T> {
     }
 
     public void update(ItemStack stack, Consumer<T> updateConsumer) {
+        this.update(stack, updateConsumer, null);
+    }
+
+    public void update(ItemStack stack, Consumer<T> updateConsumer, T defaultValue) {
         if (stack == null)
             return;
         T originalData = get(stack);
-        if (originalData == null)
-            return;
+        if (originalData == null) {
+            if (defaultValue == null) {
+                return;
+            } else {
+                originalData = defaultValue;
+            }
+        }
         updateConsumer.accept(originalData);
         set(stack, originalData);
     }

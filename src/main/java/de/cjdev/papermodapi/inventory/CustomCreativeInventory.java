@@ -107,6 +107,10 @@ public class CustomCreativeInventory implements InventoryHolder {
         }
 
         ItemStack currentItem = event.getCurrentItem();
+        if (currentItem != null) {
+            currentItem = currentItem.clone();
+            event.setCurrentItem(currentItem);
+        }
         boolean sameStack = currentItem != null && currentItem.isSimilar(event.getCursor()); // Gave an error if empty, so I did this ;3
         boolean emptyCursor = event.getCursor().isEmpty();
 

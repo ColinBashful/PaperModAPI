@@ -21,14 +21,14 @@ public final class PaperModAPI extends JavaPlugin {
     ///
     public static final Function<Boolean, CustomCreativeInventory> CUSTOM_CREATIVE_INVENTORY = hasOp -> new CustomCreativeInventory(getPlugin(), hasOp, null);
 
-    static class ConsoleColor {
+    public static class ConsoleColor {
         static String hexColor = "\u001B[38;2;%d;%d;%dm";
-        static String reset = "\u001B[0m";
-        static String blue = String.format(hexColor, 85, 85, 255);
-        static String gray = String.format(hexColor, 170, 170, 170);
-        static String darkGray = String.format(hexColor, 85, 85, 85);
-        static String darkGreen = String.format(hexColor, 0, 170, 0);
-        static String gold = String.format(hexColor, 255, 170, 0);
+        public static String reset = "\u001B[0m";
+        public static String blue = hexColor.formatted(85, 85, 255);
+        public static String gray = hexColor.formatted(170, 170, 170);
+        public static String darkGray = hexColor.formatted(85, 85, 85);
+        public static String darkGreen = hexColor.formatted(0, 170, 0);
+        public static String gold = hexColor.formatted(255, 170, 0);
     }
 
     @Override
