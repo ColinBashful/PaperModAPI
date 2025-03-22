@@ -53,7 +53,7 @@ public class CustomDataComponent<T> {
         net.minecraft.world.item.ItemStack nmsStack = CraftItemStack.unwrap(stack);
         CustomData customData = nmsStack.get(DataComponents.CUSTOM_DATA);
 
-        CompoundTag compoundTag = customData == null ? new CompoundTag() : customData.getUnsafe();
+        CompoundTag compoundTag = customData == null ? new CompoundTag() : customData.copyTag();
 
         DataResult<Tag> result = CODEC.encode(value, NbtOps.INSTANCE, NbtOps.INSTANCE.empty());
 
