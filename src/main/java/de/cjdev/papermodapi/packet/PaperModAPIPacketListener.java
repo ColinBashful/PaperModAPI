@@ -40,6 +40,8 @@ public class PaperModAPIPacketListener implements PacketListener {
 
         WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
         com.github.retrooper.packetevents.protocol.item.ItemStack packetItem = packet.getItem().copy();
+        if (packetItem.isEmpty())
+            return;
         ItemStack stack = SpigotConversionUtil.toBukkitItemStack(packetItem);
         CustomItem item = CustomItems.getItemByStack(stack);
         Player player = event.getPlayer();
