@@ -8,6 +8,7 @@ import de.cjdev.papermodapi.api.util.Util;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.*;
+import io.papermc.paper.inventory.tooltip.TooltipContext;
 import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.TypedKey;
 import io.papermc.paper.registry.keys.tags.DamageTypeTagKeys;
@@ -15,6 +16,7 @@ import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.minecraft.world.item.TooltipFlag;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -172,6 +175,9 @@ public class CustomItem {
     }
 
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+    }
+
+    public void appendHoverText(ItemStack stack, List<Component> tooltip, TooltipContext context) {
     }
 
     public static boolean sameItem(ItemStack stack, ItemStack otherStack) {

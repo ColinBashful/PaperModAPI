@@ -6,3 +6,8 @@ load: STARTUP
 authors: [CJDev]
 description: A Modding API for Paper
 website: https://modrinth.com/project/paper-mod-api
+dependencies:
+  server:
+    packetevents:
+      required: true
+      load: BEFORE

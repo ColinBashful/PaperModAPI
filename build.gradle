@@ -21,6 +21,8 @@ repositories {
         name = 'spongepowered-repo'
         url = 'https://repo.spongepowered.org/repository/maven-public/'
     }*/
+    maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
+    maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
 }
 
 /* Note for future me:
@@ -36,6 +38,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     //annotationProcessor('org.spongepowered.mixin:0.8.0')
     //implementation('net.minecrell:MixinBootstrap:1.1.0')
+    compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
 }
 
 def targetJavaVersion = 21

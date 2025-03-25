@@ -1,6 +1,7 @@
 package de.cjdev.papermodapi.api.component;
 
 import com.mojang.serialization.*;
+import de.cjdev.papermodapi.PaperModAPI;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -11,7 +12,9 @@ import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.UnaryOperator;
 
 public class CustomDataComponent<T> {
     private final NamespacedKey key;
@@ -38,7 +41,11 @@ public class CustomDataComponent<T> {
         return customData.read(CODEC.fieldOf(key.asString())).mapOrElse(t -> t, tError -> null);
     }
 
-    public @Nullable T getOrDefault(ItemStack stack, T defaultValue) {
+    public Optional<T> getOptional(ItemStack stack) {
+        return Optional.ofNullable(getOrDefault(stack, null));
+    }
+
+    public @Nullable T getOrDefault(ItemStack stack, @Nullable T defaultValue) {
         if (stack == null)
             return defaultValue;
         CustomData customData = CraftItemStack.unwrap(stack).get(DataComponents.CUSTOM_DATA);
@@ -47,39 +54,59 @@ public class CustomDataComponent<T> {
         return customData.read(CODEC.fieldOf(key.asString())).mapOrElse(t -> t, tError -> defaultValue);
     }
 
-    public void set(ItemStack stack, T value) {
+    public void set(ItemStack stack, @Nullable T value) {
         if (stack == null)
             return;
-        net.minecraft.world.item.ItemStack nmsStack = CraftItemStack.unwrap(stack);
-        CustomData customData = nmsStack.get(DataComponents.CUSTOM_DATA);
-
-        CompoundTag compoundTag = customData == null ? new CompoundTag() : customData.copyTag();
-
-        DataResult<Tag> result = CODEC.encode(value, NbtOps.INSTANCE, NbtOps.INSTANCE.empty());
-
-        result.resultOrPartial(System.err::println).ifPresent(serializedData -> {
-            compoundTag.put(key.toString(), serializedData);
+        CraftItemStack.unwrap(stack).update(DataComponents.CUSTOM_DATA, CustomData.EMPTY, customData -> {
+            CompoundTag compoundTag = customData.copyTag();
+            if (value != null) {
+                DataResult<Tag> result = CODEC.encode(value, NbtOps.INSTANCE, NbtOps.INSTANCE.empty());
+                result.resultOrPartial(PaperModAPI.LOGGER::warning).ifPresent(serializedData -> compoundTag.put(key.toString(), serializedData));
+            } else
+                compoundTag.remove(key.toString());
+            return CustomData.of(compoundTag);
         });
-
-        nmsStack.set(DataComponents.CUSTOM_DATA, CustomData.of(compoundTag));
     }
 
-    public void update(ItemStack stack, Consumer<T> updateConsumer) {
-        this.update(stack, updateConsumer, null);
-    }
-
-    public void update(ItemStack stack, Consumer<T> updateConsumer, T defaultValue) {
+    /**
+     * @return Returns whether the component was removed successfully
+     */
+    public boolean remove(ItemStack stack) {
         if (stack == null)
-            return;
-        T originalData = get(stack);
-        if (originalData == null) {
-            if (defaultValue == null) {
-                return;
-            } else {
-                originalData = defaultValue;
+            return false;
+        AtomicBoolean success = new AtomicBoolean();
+        CraftItemStack.unwrap(stack).update(DataComponents.CUSTOM_DATA, CustomData.EMPTY, customData -> {
+            CompoundTag compoundTag = customData.copyTag();
+            if (compoundTag.contains(key.toString())) {
+                compoundTag.remove(key.toString());
+                success.set(true);
+                return CustomData.of(compoundTag);
             }
+            return customData;
+        });
+        return success.get();
+    }
+
+    /**
+     * @return Returns whether the value changed
+     */
+    public boolean update(ItemStack stack, UnaryOperator<@Nullable T> updater) {
+        return this.update(stack, updater, null);
+    }
+
+    /**
+     * @return Returns whether the value changed
+     */
+    public boolean update(ItemStack stack, UnaryOperator<@Nullable T> updater, @Nullable T defaultValue) {
+        if (stack == null)
+            return false;
+        T original = get(stack);
+        T data = original == null ? defaultValue : original;
+        T updated = updater.apply(data);
+        if (updated != original) {
+            set(stack, updated);
+            return true;
         }
-        updateConsumer.accept(originalData);
-        set(stack, originalData);
+        return false;
     }
 }

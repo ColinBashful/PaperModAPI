@@ -34,7 +34,7 @@ public class MoreCodecs {
                 int[] parts = intStream.toArray();
 
                 if (parts.length != 4) {
-                    return DataResult.error(() -> "Quit modifying NBT");
+                    return DataResult.error(() -> "Quit modifying NBT :(");
                 }
 
                 long mostSigBits = ((long) parts[0] << 32) | (parts[1] & 0xFFFFFFFFL);

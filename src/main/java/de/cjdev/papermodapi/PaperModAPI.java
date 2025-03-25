@@ -1,8 +1,12 @@
 package de.cjdev.papermodapi;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import de.cjdev.papermodapi.init.CommandInit;
 import de.cjdev.papermodapi.inventory.CustomCreativeInventory;
 import de.cjdev.papermodapi.listener.*;
+import de.cjdev.papermodapi.packet.PaperModAPIPacketListener;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -29,6 +33,14 @@ public final class PaperModAPI extends JavaPlugin {
         public static String darkGray = hexColor.formatted(85, 85, 85);
         public static String darkGreen = hexColor.formatted(0, 170, 0);
         public static String gold = hexColor.formatted(255, 170, 0);
+    }
+
+    @Override
+    public void onLoad() {
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+
+        PacketEvents.getAPI().getEventManager().registerListener(
+                new PaperModAPIPacketListener(), PacketListenerPriority.HIGHEST);
     }
 
     @Override
@@ -77,6 +89,8 @@ public final class PaperModAPI extends JavaPlugin {
             if (onlinePlayer.getOpenInventory().getTopInventory().getHolder() instanceof CustomCreativeInventory customCreativeInventory)
                 customCreativeInventory.getInventory().close();
         }
+
+        PacketEvents.getAPI().terminate();
     }
 
     public static PaperModAPI getPlugin(){
