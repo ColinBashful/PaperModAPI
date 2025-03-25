@@ -10,11 +10,14 @@ import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCreativeInventoryAction;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowItems;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import de.cjdev.papermodapi.api.item.CustomItems;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.papermc.paper.inventory.tooltip.TooltipContext;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -34,30 +37,47 @@ public class PaperModAPIPacketListener implements PacketListener {
         packet.setItemStack(SpigotConversionUtil.fromBukkitItemStack(originalStack));
     }
 
-    @Override
-    public void onPacketSend(PacketSendEvent event) {
-        if (event.getPacketType() != PacketType.Play.Server.SET_SLOT) return;
-
-        WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
-        com.github.retrooper.packetevents.protocol.item.ItemStack packetItem = packet.getItem().copy();
-        if (packetItem.isEmpty())
+    private static void appendTooltip(com.github.retrooper.packetevents.protocol.item.ItemStack packetItem, Player player) {
+        if (packetItem == null || packetItem.isEmpty())
             return;
         ItemStack stack = SpigotConversionUtil.toBukkitItemStack(packetItem);
         CustomItem item = CustomItems.getItemByStack(stack);
-        Player player = event.getPlayer();
 
         TooltipContext tooltipContext = TooltipContext.create(false, player.getGameMode() == GameMode.CREATIVE);
-        ItemLore tooltip = packetItem.getComponentOr(ComponentTypes.LORE, new ItemLore(new ArrayList<>()));
+        ItemLore tooltip = packetItem.getComponentOr(ComponentTypes.LORE, new ItemLore(List.of()));
         List<Component> lines = new ArrayList<>(tooltip.getLines());
+        List<Component> tooltipLines = new ArrayList<>();
         if (item != null)
-            item.appendHoverText(stack, lines, tooltipContext);
+            item.appendHoverText(stack, tooltipLines, tooltipContext);
 
+        List<Component> tooltipTransformed = tooltipLines.stream().map(component -> {
+            Component modified = component;
+            if (!component.hasDecoration(TextDecoration.ITALIC))
+                modified = component.decoration(TextDecoration.ITALIC, false);
+            if (component.color() == null)
+                modified = component.color(TextColor.color(-1));
+            return modified;
+        }).toList();
+        lines.addAll(tooltipTransformed);
         packetItem.setComponent(ComponentTypes.LORE, new ItemLore(lines));
 
         NBTCompound customData = packetItem.getComponentOr(ComponentTypes.CUSTOM_DATA, new NBTCompound());
         customData.setTag("modapi:original_item", new NBTByteArray(stack.serializeAsBytes()));
         packetItem.setComponent(ComponentTypes.CUSTOM_DATA, customData);
+    }
 
-        packet.setItem(packetItem);
+    @Override
+    public void onPacketSend(PacketSendEvent event) {
+        switch (event.getPacketType()) {
+            case PacketType.Play.Server.SET_SLOT -> {
+                WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
+                appendTooltip(packet.getItem(), event.getPlayer());
+            }
+            case PacketType.Play.Server.WINDOW_ITEMS -> {
+                WrapperPlayServerWindowItems packet = new WrapperPlayServerWindowItems(event);
+                packet.getItems().forEach(packetItem -> appendTooltip(packetItem, event.getPlayer()));
+            }
+            default -> {}
+        }
     }
 }
