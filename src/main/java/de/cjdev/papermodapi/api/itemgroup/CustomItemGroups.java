@@ -6,7 +6,10 @@ import de.cjdev.papermodapi.PaperModAPI;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class CustomItemGroups {
     private static final BiMap<NamespacedKey, CustomItemGroup> itemGroups = HashBiMap.create();
@@ -28,7 +31,7 @@ public class CustomItemGroups {
         return itemGroups.inverse().get(group);
     }
 
-    public static List<CustomItemGroup> getItemGroups(){
-        return itemGroups.values().stream().toList();
+    public static Map<NamespacedKey, CustomItemGroup> getItemGroups(){
+        return new HashMap<>(itemGroups);
     }
 }

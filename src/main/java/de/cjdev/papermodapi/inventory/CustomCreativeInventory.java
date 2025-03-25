@@ -3,8 +3,14 @@ package de.cjdev.papermodapi.inventory;
 import de.cjdev.papermodapi.api.itemgroup.CustomItemGroup;
 import de.cjdev.papermodapi.api.itemgroup.CustomItemGroups;
 import de.cjdev.papermodapi.helper.PlayerHeadHelper;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.text.Component;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.component.CustomData;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -14,6 +20,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 public class CustomCreativeInventory implements InventoryHolder {
@@ -33,9 +41,12 @@ public class CustomCreativeInventory implements InventoryHolder {
             this.items = selectedItemGroup.getDisplayStacks().stream().toList();
         }else {
             this.inventory = plugin.getServer().createInventory(this, 9*6, Component.text("Custom Items"));
-            this.items = CustomItemGroups.getItemGroups().stream().map(itemGroup -> {
+            this.items = CustomItemGroups.getItemGroups().values().stream().map(itemGroup -> {
                 ItemStack iconStack = itemGroup.iconSupplier.get();
                 iconStack.editMeta(itemMeta -> itemMeta.itemName(itemGroup.displayName));
+                CompoundTag customData = new CompoundTag();
+                customData.putString("group", CustomItemGroups.getKeyByGroup(itemGroup).asString());
+                CraftItemStack.unwrap(iconStack).set(DataComponents.CUSTOM_DATA, CustomData.of(customData));
                 return iconStack;
             }).toList();
         }
@@ -95,18 +106,19 @@ public class CustomCreativeInventory implements InventoryHolder {
             return;
         }
 
+        ItemStack currentItem = event.getCurrentItem();
+
         if (uiClick && selectedItemGroup == null) {
             event.setCancelled(true);
-            List<CustomItemGroup> itemGroups = CustomItemGroups.getItemGroups();
-            int clickedItemGroup = page * validInventorySize + event.getSlot();
-            if (clickedItemGroup > itemGroups.size())
+            if (currentItem == null || currentItem.isEmpty())
                 return;
-            player.openInventory(new CustomCreativeInventory(plugin, player.isOp(), itemGroups.get(clickedItemGroup)).getInventory());
+            Map<NamespacedKey, CustomItemGroup> itemGroups = CustomItemGroups.getItemGroups();
+            String group = CraftItemStack.unwrap(currentItem).get(DataComponents.CUSTOM_DATA).getUnsafe().getString("group");
+            player.openInventory(new CustomCreativeInventory(plugin, player.isOp(), itemGroups.get(NamespacedKey.fromString(group))).getInventory());
             this.inventory.close();
             return;
         }
 
-        ItemStack currentItem = event.getCurrentItem();
         if (currentItem != null) {
             currentItem = currentItem.clone();
             event.setCurrentItem(currentItem);
