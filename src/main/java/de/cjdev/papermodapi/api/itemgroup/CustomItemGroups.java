@@ -7,9 +7,7 @@ import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class CustomItemGroups {
     private static final BiMap<NamespacedKey, CustomItemGroup> itemGroups = HashBiMap.create();

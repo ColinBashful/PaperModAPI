@@ -3,7 +3,6 @@ package de.cjdev.papermodapi.inventory;
 import de.cjdev.papermodapi.api.itemgroup.CustomItemGroup;
 import de.cjdev.papermodapi.api.itemgroup.CustomItemGroups;
 import de.cjdev.papermodapi.helper.PlayerHeadHelper;
-import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.text.Component;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.IntStream;
 
 public class CustomCreativeInventory implements InventoryHolder {

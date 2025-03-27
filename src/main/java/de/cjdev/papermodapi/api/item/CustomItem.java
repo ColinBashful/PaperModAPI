@@ -16,7 +16,6 @@ import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
-import net.minecraft.world.item.TooltipFlag;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -177,7 +176,7 @@ public class CustomItem {
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
     }
 
-    public void appendHoverText(ItemStack stack, List<Component> tooltip, TooltipContext context) {
+    public void appendTooltip(ItemStack stack, List<Component> tooltip, TooltipContext context) {
     }
 
     public static boolean sameItem(ItemStack stack, ItemStack otherStack) {

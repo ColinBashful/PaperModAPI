@@ -48,7 +48,7 @@ public class PaperModAPIPacketListener implements PacketListener {
         List<Component> lines = new ArrayList<>(tooltip.getLines());
         List<Component> tooltipLines = new ArrayList<>();
         if (item != null)
-            item.appendHoverText(stack, tooltipLines, tooltipContext);
+            item.appendTooltip(stack, tooltipLines, tooltipContext);
 
         List<Component> tooltipTransformed = tooltipLines.stream().map(component -> {
             Component modified = component;
