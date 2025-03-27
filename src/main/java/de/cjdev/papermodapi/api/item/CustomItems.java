@@ -23,21 +23,20 @@ public class CustomItems {
         return register(id, CustomItem::new, new CustomItem.Settings());
     }
 
-    public static CustomItem register(NamespacedKey key, Function<CustomItem.Settings, CustomItem> factory) {
+    public static <T extends CustomItem> T register(NamespacedKey key, Function<CustomItem.Settings, T> factory) {
         return register(key, factory, new CustomItem.Settings());
     }
 
-    public static CustomItem register(NamespacedKey key, Function<CustomItem.Settings, CustomItem> factory, CustomItem.Settings settings) {
-        CustomItem item = factory.apply(settings.registryKey(key));
+    public static <T extends CustomItem> T register(NamespacedKey key, Function<CustomItem.Settings, T> factory, CustomItem.Settings settings) {
+        T item = factory.apply(settings.registryKey(key));
 //        if (item instanceof CustomBlockItem blockItem) {
 //            blockItem.appendBlocks(CustomItem.BLOCK_ITEMS, item);
 //        }
 
-        if(items.containsKey(key)){
-            PaperModAPI.LOGGER.warning("[Item] " + key.toString() + " has already been registered.");
-            return items.get(key);
+        CustomItem customItem = items.putIfAbsent(key, item);
+        if (customItem != null) {
+            throw new IllegalArgumentException("[Item] " + key.toString() + " has already been registered.");
         }
-        items.put(key, item);
         return item;
     }
 
