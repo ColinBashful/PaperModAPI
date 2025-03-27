@@ -5,30 +5,22 @@ import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.component.ComponentTypes;
 import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemLore;
-import com.github.retrooper.packetevents.protocol.item.type.ItemType;
-import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
 import com.github.retrooper.packetevents.protocol.nbt.NBTByteArray;
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.protocol.recipe.Ingredient;
-import com.github.retrooper.packetevents.protocol.recipe.Recipe;
-import com.github.retrooper.packetevents.protocol.recipe.RecipeSerializers;
-import com.github.retrooper.packetevents.protocol.recipe.data.StoneCuttingRecipeData;
-import com.github.retrooper.packetevents.resources.ResourceLocation;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCreativeInventoryAction;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDeclareRecipes;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowItems;
+import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import de.cjdev.papermodapi.api.item.CustomItems;
+import de.cjdev.papermodapi.api.item.TooltipCallback;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.papermc.paper.inventory.tooltip.TooltipContext;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -59,6 +51,10 @@ public class PaperModAPIPacketListener implements PacketListener {
         List<Component> tooltipLines = new ArrayList<>();
         if (item != null)
             item.appendTooltip(stack, tooltipLines, tooltipContext);
+
+        for (TooltipCallback tooltipCallback : PaperModAPI.TOOLTIP_CALLBACKS) {
+            tooltipCallback.addTooltip(player, stack, tooltipLines);
+        }
 
         List<Component> tooltipTransformed = tooltipLines.stream().map(component -> {
             Component modified = component;

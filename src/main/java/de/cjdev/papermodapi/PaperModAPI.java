@@ -2,6 +2,7 @@ package de.cjdev.papermodapi;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import de.cjdev.papermodapi.api.item.TooltipCallback;
 import de.cjdev.papermodapi.init.CommandInit;
 import de.cjdev.papermodapi.inventory.CustomCreativeInventory;
 import de.cjdev.papermodapi.listener.*;
@@ -13,12 +14,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
 public final class PaperModAPI extends JavaPlugin {
     private static PaperModAPI plugin;
     public static Logger LOGGER;
+
+    public static final List<TooltipCallback> TOOLTIP_CALLBACKS = new ArrayList<>();
 
     ///
     /// Don't ask me why the entire class gets deleted if unused for too long or whatever the reason is
@@ -99,5 +104,9 @@ public final class PaperModAPI extends JavaPlugin {
 
     public static NamespacedKey key(String id){
         return new NamespacedKey("modapi", id);
+    }
+
+    public static void registerTooltipCallback(TooltipCallback callback) {
+        TOOLTIP_CALLBACKS.add(callback);
     }
 }
