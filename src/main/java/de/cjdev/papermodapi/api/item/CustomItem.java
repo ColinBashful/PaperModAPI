@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -81,7 +82,9 @@ public class CustomItem {
                 displayStack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, (CustomModelData) this.components.get(DataComponentTypes.CUSTOM_MODEL_DATA));
             }
             if (type == DataComponentTypes.USE_COOLDOWN) {
-                defaultStack.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(((UseCooldown) o).seconds()).cooldownGroup(itemId).build());
+                UseCooldown original = ((UseCooldown) o);
+                Key group = original.cooldownGroup();
+                defaultStack.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(original.seconds()).cooldownGroup(group == null ? itemId : group).build());
                 return;
             }
             if (type instanceof DataComponentType.Valued valued)
@@ -177,12 +180,12 @@ public class CustomItem {
     public void appendTooltip(ItemStack stack, List<Component> tooltip, TooltipContext context) {
     }
 
-    public static boolean sameItem(ItemStack stack, ItemStack otherStack) {
+    public static boolean isSimilar(ItemStack stack, ItemStack otherStack) {
         if (stack == null || otherStack == null || stack.isEmpty() || otherStack.isEmpty())
             return false;
         NamespacedKey item = CustomDataComponents.ITEM_COMPONENT.get(stack);
         NamespacedKey otherItem = CustomDataComponents.ITEM_COMPONENT.get(otherStack);
-        return item == otherItem;
+        return Objects.equals(item, otherItem);
     }
 
     public static class Settings {
