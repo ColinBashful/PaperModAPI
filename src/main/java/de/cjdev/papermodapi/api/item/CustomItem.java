@@ -178,7 +178,7 @@ public class CustomItem {
     }
 
     public static boolean sameItem(ItemStack stack, ItemStack otherStack) {
-        if (stack == null || otherStack == null || stack.isEmpty() == otherStack.isEmpty())
+        if (stack == null || otherStack == null || stack.isEmpty() || otherStack.isEmpty())
             return false;
         NamespacedKey item = CustomDataComponents.ITEM_COMPONENT.get(stack);
         NamespacedKey otherItem = CustomDataComponents.ITEM_COMPONENT.get(otherStack);
