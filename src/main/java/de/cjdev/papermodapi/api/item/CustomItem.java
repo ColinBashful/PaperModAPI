@@ -104,9 +104,7 @@ public class CustomItem {
     }
 
     public final boolean isSimilar(@Nullable ItemStack stack) {
-        if (stack == null || stack.isEmpty())
-            return false;
-        return CustomItems.getKeyByStack(stack) == getId(this);
+        return stack != null && !stack.isEmpty() && CustomItems.getKeyByStack(stack).equals(getId(this));
     }
 
     /// Simply returns the DefaultStack without the unnecessary components
