@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class CustomItem {
     //    public static final Map<CustomBlock, CustomItem> BLOCK_ITEMS = Maps.newHashMap();
@@ -95,7 +94,7 @@ public class CustomItem {
         });
 
         Map<CustomDataComponent, ?> customData = settings.getCustomComponents();
-        customData.forEach((customDataComponent, o) -> customDataComponent.set(defaultStack, o));
+        customData.forEach((customDataComponent, value) -> customDataComponent.set(defaultStack, value));
         CustomDataComponents.ITEM_COMPONENT.set(defaultStack, itemId);
 
         this.defaultStack = defaultStack;
@@ -180,6 +179,12 @@ public class CustomItem {
     public void appendTooltip(ItemStack stack, List<Component> tooltip, TooltipContext context) {
     }
 
+    public static void applyCooldown(Player player, ItemStack stack, float seconds) {
+        UseCooldown useCooldown = stack.getData(DataComponentTypes.USE_COOLDOWN);
+        stack.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(seconds).cooldownGroup(useCooldown == null ? null : useCooldown.cooldownGroup()).build());
+        player.setCooldown(stack, (int)(seconds * 20));
+    }
+
     public static boolean isSimilar(ItemStack stack, ItemStack otherStack) {
         if (stack == null || otherStack == null || stack.isEmpty() || otherStack.isEmpty())
             return false;
@@ -189,105 +194,108 @@ public class CustomItem {
     }
 
     public static class Settings {
-        private static final Function<NamespacedKey, String> BLOCK_PREFIXED_TRANSLATION_KEY = id -> Util.createTranslationKey("block", id);
-        private static final Function<NamespacedKey, String> ITEM_PREFIXED_TRANSLATION_KEY = id -> Util.createTranslationKey("item", id);
+        private static final DependantName<NamespacedKey, String> BLOCK_PREFIXED_TRANSLATION_ID = id -> Util.createTranslationKey("block", id);
+        private static final DependantName<NamespacedKey, String> ITEM_PREFIXED_TRANSLATION_ID = id -> Util.createTranslationKey("item", id);
         private @NotNull Material baseMaterial;
         private boolean dyeable;
         private @Nullable Consumer<ItemStack> recipeRemainder;
-        private final Map<DataComponentType, Object> components = new HashMap<>();
-        private final Map<CustomDataComponent, Object> customComponents = new HashMap<>();
+        private final Map<DataComponentType, Object> components;
+        private final Map<CustomDataComponent, Object> customComponents;
         private NamespacedKey registryKey;
-        private Function<NamespacedKey, String> translationKey;
-        private Function<NamespacedKey, NamespacedKey> modelId;
+        private DependantName<NamespacedKey, String> translationKey;
+        private DependantName<NamespacedKey, NamespacedKey> modelId;
         private @Nullable NamespacedKey repairable;
 
         public Settings() {
+            this.components = new HashMap<>();
+            this.customComponents = new HashMap<>();
+
             this.baseMaterial = Material.PAPER;
             this.dyeable = false;
-            this.translationKey = ITEM_PREFIXED_TRANSLATION_KEY;
+            this.translationKey = ITEM_PREFIXED_TRANSLATION_ID;
             this.modelId = key -> key;
         }
 
-        public Settings dyeable() {
+        public final Settings dyeable() {
             this.dyeable = true;
             return this;
         }
 
-        public Settings food(FoodProperties food) {
+        public final Settings food(FoodProperties food) {
             return this.food(food, Consumable.consumable().build());
         }
 
-        public Settings food(FoodProperties food, Consumable consumable) {
+        public final Settings food(FoodProperties food, Consumable consumable) {
             return this.component(DataComponentTypes.FOOD, food).component(DataComponentTypes.CONSUMABLE, consumable);
         }
 
-        public Settings useRemainder(ItemStack convertInto) {
+        public final Settings useRemainder(ItemStack convertInto) {
             return this.component(DataComponentTypes.USE_REMAINDER, UseRemainder.useRemainder(convertInto));
         }
 
-        public Settings useCooldown(float seconds) {
+        public final Settings useCooldown(float seconds) {
             return this.component(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(seconds).build());
         }
 
-        public Settings maxCount(int maxCount) {
+        public final Settings maxCount(int maxCount) {
             return this.component(DataComponentTypes.MAX_STACK_SIZE, maxCount);
         }
 
-        public Settings maxDamage(int maxDamage) {
+        public final Settings maxDamage(int maxDamage) {
             this.component(DataComponentTypes.MAX_DAMAGE, maxDamage);
             this.component(DataComponentTypes.MAX_STACK_SIZE, 1);
             this.component(DataComponentTypes.DAMAGE, 0);
             return this;
         }
 
-        public Settings recipeRemainder(Consumer<ItemStack> recipeRemainder) {
+        public final Settings recipeRemainder(Consumer<ItemStack> recipeRemainder) {
             this.recipeRemainder = recipeRemainder;
             return this;
         }
 
-        public Settings rarity(ItemRarity rarity) {
+        public final Settings rarity(ItemRarity rarity) {
             return this.component(DataComponentTypes.RARITY, rarity);
         }
 
-        public Settings fireproof() {
+        public final Settings fireproof() {
             return this.component(DataComponentTypes.DAMAGE_RESISTANT, DamageResistant.damageResistant(DamageTypeTagKeys.IS_FIRE));
         }
 
-        public Settings jukeboxPlayable(JukeboxSong songKey) {
+        public final Settings jukeboxPlayable(JukeboxSong songKey) {
             return this.component(DataComponentTypes.JUKEBOX_PLAYABLE, JukeboxPlayable.jukeboxPlayable(songKey).build());
         }
 
-        public Settings enchantable(int enchantability) {
+        public final Settings enchantable(int enchantability) {
             return this.component(DataComponentTypes.ENCHANTABLE, Enchantable.enchantable(enchantability));
         }
 
-        public Settings repairable(Material repairIngredient) {
+        public final Settings repairable(Material repairIngredient) {
             return this.component(DataComponentTypes.REPAIRABLE, Repairable.repairable(RegistrySet.keySet(RegistryKey.ITEM, TypedKey.create(RegistryKey.ITEM, repairIngredient.getKey()))));
         }
 
-        public Settings repairable(RegistryKeySet<ItemType> repairIngredientsTag) {
+        public final Settings repairable(RegistryKeySet<ItemType> repairIngredientsTag) {
             return this.component(DataComponentTypes.REPAIRABLE, Repairable.repairable(repairIngredientsTag));
         }
 
-        public Settings equippable(EquipmentSlot slot) {
+        public final Settings equippable(EquipmentSlot slot) {
             return this.component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).build());
         }
 
-        public Settings equippableUnswappable(EquipmentSlot slot) {
+        public final Settings equippableUnswappable(EquipmentSlot slot) {
             return this.component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).swappable(false).build());
         }
 
-        public Settings registryKey(NamespacedKey registryKey) {
+        public final Settings registryKey(NamespacedKey registryKey) {
             this.registryKey = registryKey;
             return this;
         }
 
-        public Settings baseMaterial(@NotNull Material baseMaterial) {
+        public final Settings baseMaterial(@NotNull Material baseMaterial) {
             this.baseMaterial = baseMaterial;
             return this;
         }
 
-        public boolean canDye() {
+        public final boolean canDye() {
             return this.dyeable;
         }
 
@@ -296,7 +304,17 @@ public class CustomItem {
         }
 
         public Settings translationKey(String translationKey) {
-            this.translationKey = customItem -> translationKey;
+            this.translationKey = id -> translationKey;
+            return this;
+        }
+
+        public final Settings useBlockTranslationPrefix() {
+            this.translationKey = BLOCK_PREFIXED_TRANSLATION_ID;
+            return this;
+        }
+
+        public final Settings useItemTranslationPrefix() {
+            this.translationKey = ITEM_PREFIXED_TRANSLATION_ID;
             return this;
         }
 
@@ -305,38 +323,38 @@ public class CustomItem {
             return this;
         }
 
-        private String getTranslationKey() {
-            return this.translationKey.apply(this.registryKey);
+        protected String getTranslationKey() {
+            return this.translationKey.get(Objects.requireNonNull(this.registryKey, "Item id not set"));
         }
 
-        private NamespacedKey getModelId() {
-            return this.modelId.apply(this.registryKey);
+        public final NamespacedKey getModelId() {
+            return this.modelId.get(Objects.requireNonNull(this.registryKey, "Item id not set"));
         }
 
         private Map<CustomDataComponent, ?> getCustomComponents() {
             return this.customComponents;
         }
 
-        public Settings component(DataComponentType.NonValued type) {
+        public final Settings component(DataComponentType.NonValued type) {
             this.components.put(type, true);
             return this;
         }
 
-        public <T> Settings component(DataComponentType.Valued<T> type, T value) {
+        public final <T> Settings component(DataComponentType.Valued<T> type, T value) {
             this.components.put(type, value);
             return this;
         }
 
-        public <T> Settings component(CustomDataComponent<T> type, T value) {
+        public final <T> Settings component(CustomDataComponent<T> type, T value) {
             customComponents.put(type, value);
             return this;
         }
 
-        public Settings attributeModifiers(ItemAttributeModifiers attributeModifiers) {
+        public final Settings attributeModifiers(ItemAttributeModifiers attributeModifiers) {
             return this.component(DataComponentTypes.ATTRIBUTE_MODIFIERS, attributeModifiers);
         }
 
-        Map<DataComponentType, Object> getValidatedComponents() {
+        final Map<DataComponentType, Object> getValidatedComponents() {
             Map<DataComponentType, Object> componentMap = this.components;
             if (componentMap.containsKey(DataComponentTypes.DAMAGE) && (Integer) componentMap.getOrDefault(DataComponentTypes.MAX_STACK_SIZE, 1) > 1) {
                 throw new IllegalStateException("Item cannot have both durability and be stackable");
