@@ -106,7 +106,10 @@ public class CustomItem {
     }
 
     public final boolean isSimilar(@Nullable ItemStack stack) {
-        return stack != null && !stack.isEmpty() && CustomItems.getKeyByStack(stack).equals(getId(this));
+        if (stack == null || stack.isEmpty())
+            return false;
+        NamespacedKey itemId = CustomItems.getKeyByStack(stack);
+        return itemId != null && itemId.equals(getId(this));
     }
 
     /// Simply returns the DefaultStack without the unnecessary components
@@ -189,7 +192,7 @@ public class CustomItem {
             forRemoval = true,
             since = "1.2"
     )
-    public static boolean sameStack(ItemStack stack, ItemStack otherStack) {
+    public static boolean sameItem(ItemStack stack, ItemStack otherStack) {
         return isSimilar(stack, otherStack);
     }
 
@@ -198,7 +201,7 @@ public class CustomItem {
             return false;
         NamespacedKey item = CustomDataComponents.ITEM_COMPONENT.get(stack);
         NamespacedKey otherItem = CustomDataComponents.ITEM_COMPONENT.get(otherStack);
-        return Objects.equals(item, otherItem);
+        return item != null && Objects.equals(item, otherItem);
     }
 
     public static class Settings {
