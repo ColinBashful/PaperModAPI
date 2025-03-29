@@ -185,6 +185,14 @@ public class CustomItem {
         player.setCooldown(stack, (int)(seconds * 20));
     }
 
+    @Deprecated(
+            forRemoval = true,
+            since = "1.2"
+    )
+    public static boolean sameStack(ItemStack stack, ItemStack otherStack) {
+        return isSimilar(stack, otherStack);
+    }
+
     public static boolean isSimilar(ItemStack stack, ItemStack otherStack) {
         if (stack == null || otherStack == null || stack.isEmpty() || otherStack.isEmpty())
             return false;
