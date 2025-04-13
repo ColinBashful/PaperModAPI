@@ -121,6 +121,10 @@ public class CustomItem {
         return this.baseMaterial;
     }
 
+    public boolean isDyeable() {
+        return this.dyeable;
+    }
+
     public final Component getName() {
         return Component.translatable(this.translationKey);
     }

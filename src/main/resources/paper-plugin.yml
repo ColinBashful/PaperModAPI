@@ -1,5 +1,5 @@
 name: PaperModAPI
-version: '1.1'
+version: "${version}"
 main: de.cjdev.papermodapi.PaperModAPI
 api-version: '1.21'
 load: STARTUP
