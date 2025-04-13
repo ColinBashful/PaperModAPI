@@ -1,8 +1,6 @@
 package de.cjdev.papermodapi.packet;
 
-import com.github.retrooper.packetevents.event.PacketListener;
-import com.github.retrooper.packetevents.event.PacketReceiveEvent;
-import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.event.*;
 import com.github.retrooper.packetevents.protocol.component.ComponentTypes;
 import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemLore;
 import com.github.retrooper.packetevents.protocol.nbt.NBTByteArray;
@@ -29,61 +27,64 @@ import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PaperModAPIPacketListener implements PacketListener {
 
-    private static final HashMap<UUID, Integer> lastUsed = new HashMap<>(Bukkit.getMaxPlayers());
-    private static final HashMap<UUID, Integer> startedUsing = new HashMap<>(Bukkit.getMaxPlayers());
+    private static final Map<UUID, Integer> lastUsed = new ConcurrentHashMap<>(Bukkit.getMaxPlayers());
+    private static final Map<UUID, Integer> startedUsing = new ConcurrentHashMap<>(Bukkit.getMaxPlayers());
 
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         switch (event.getPacketType()) {
             case PacketType.Play.Client.CREATIVE_INVENTORY_ACTION -> {
-                WrapperPlayClientCreativeInventoryAction packet = new WrapperPlayClientCreativeInventoryAction(event);
+                final WrapperPlayClientCreativeInventoryAction packet = new WrapperPlayClientCreativeInventoryAction(event);
                 NBTByteArray originalItem = packet.getItemStack().getComponentOr(ComponentTypes.CUSTOM_DATA, new NBTCompound()).getTagOfTypeOrNull("modapi:original_item", NBTByteArray.class);
                 if (originalItem == null) return;
                 ItemStack originalStack = ItemStack.deserializeBytes(originalItem.getValue());
                 packet.setItemStack(SpigotConversionUtil.fromBukkitItemStack(originalStack));
             }
             case PacketType.Play.Client.USE_ITEM -> {
-                WrapperPlayClientUseItem packet = new WrapperPlayClientUseItem(event);
+                final WrapperPlayClientUseItem packet = new WrapperPlayClientUseItem(event);
 
                 EquipmentSlot hand = EquipmentSlot.OFF_HAND;
                 if (packet.getHand() == InteractionHand.MAIN_HAND)
                     hand = EquipmentSlot.HAND;
 
-                int currentTick = Bukkit.getCurrentTick();
-                User user = event.getUser();
-                Player player = event.getPlayer();
-                Integer previousLastUsed = lastUsed.put(user.getUUID(), currentTick);
-                Integer finalPreviousLastUsed = previousLastUsed;
-                startedUsing.compute(user.getUUID(), (uuid, integer) -> {
-                    if (integer != null) {
-                        if (finalPreviousLastUsed == null)
-                            return currentTick;
-                        if (finalPreviousLastUsed + 4 != currentTick) {
-                            return currentTick;
-                        }
-                        return integer;
-                    }
-                    return currentTick;
-                });
-                if (previousLastUsed == null)
-                    previousLastUsed = currentTick;
-                else if (previousLastUsed + 4 != currentTick) {
+                final int currentTick = Bukkit.getCurrentTick();
+                final User user = event.getUser();
+                final Player player = event.getPlayer();
+
+                int previousLastUsed = Objects.requireNonNullElse(lastUsed.put(user.getUUID(), currentTick), -1);
+                final boolean newStart = previousLastUsed + 4 != currentTick;
+                startedUsing.compute(user.getUUID(), (uuid, integer) -> newStart ? currentTick : integer == null ? -1 : integer);
+                if (newStart) {
                     previousLastUsed = currentTick;
                 }
 
-                ItemStack usedItem = player.getInventory().getItem(hand);
-                CustomItem customItem = CustomItems.getItemByStack(usedItem);
+                final ItemStack usedItem = player.getInventory().getItem(hand);
+                final CustomItem customItem = CustomItems.getItemByStack(usedItem);
                 if (customItem == null)
                     return;
 
-                for (int t = previousLastUsed; t < currentTick; ++t) {
-                    customItem.usageTick(player.getWorld(), player, usedItem, t - startedUsing.get(user.getUUID()));
-                }
+                final int finalPreviousLastUsed = previousLastUsed;
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (currentTick - startedUsing.get(user.getUUID()) == 0) {
+                            player.sendMessage(Component.text(currentTick - startedUsing.get(user.getUUID())));
+                            customItem.usageTick(player.getWorld(), player, usedItem, 0);
+                        } else {
+                            for (int t = finalPreviousLastUsed + 1; t <= currentTick; ++t) {
+                                player.sendMessage(Component.text(t - startedUsing.get(user.getUUID())));
+                                customItem.usageTick(player.getWorld(), player, usedItem, t - startedUsing.get(user.getUUID()));
+                            }
+                        }
+                    }
+                }.runTask(PaperModAPI.getPlugin());
             }
             default -> {
             }
@@ -93,8 +94,8 @@ public class PaperModAPIPacketListener implements PacketListener {
     private static void appendTooltip(com.github.retrooper.packetevents.protocol.item.ItemStack packetItem, Player player) {
         if (packetItem == null || packetItem.isEmpty())
             return;
-        ItemStack stack = SpigotConversionUtil.toBukkitItemStack(packetItem);
-        CustomItem item = CustomItems.getItemByStack(stack);
+        final ItemStack stack = SpigotConversionUtil.toBukkitItemStack(packetItem);
+        final CustomItem item = CustomItems.getItemByStack(stack);
 
         TooltipContext tooltipContext = TooltipContext.create(false, player.getGameMode() == GameMode.CREATIVE);
         ItemLore tooltip = packetItem.getComponentOr(ComponentTypes.LORE, new ItemLore(List.of()));
@@ -137,5 +138,21 @@ public class PaperModAPIPacketListener implements PacketListener {
             }
             default -> {}
         }
+    }
+
+    @Override
+    public void onUserConnect(UserConnectEvent event) {
+//        final UUID uuid = event.getUser().getUUID();
+//        if (uuid == null)
+//            return;
+    }
+
+    @Override
+    public void onUserDisconnect(UserDisconnectEvent event) {
+        final UUID uuid = event.getUser().getUUID();
+        if (uuid == null)
+            return;
+        lastUsed.remove(uuid);
+        startedUsing.remove(uuid);
     }
 }
