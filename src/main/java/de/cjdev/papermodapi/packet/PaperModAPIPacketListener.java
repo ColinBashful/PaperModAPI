@@ -75,11 +75,9 @@ public class PaperModAPIPacketListener implements PacketListener {
                     @Override
                     public void run() {
                         if (currentTick - startedUsing.get(user.getUUID()) == 0) {
-                            player.sendMessage(Component.text(currentTick - startedUsing.get(user.getUUID())));
                             customItem.usageTick(player.getWorld(), player, usedItem, 0);
                         } else {
                             for (int t = finalPreviousLastUsed + 1; t <= currentTick; ++t) {
-                                player.sendMessage(Component.text(t - startedUsing.get(user.getUUID())));
                                 customItem.usageTick(player.getWorld(), player, usedItem, t - startedUsing.get(user.getUUID()));
                             }
                         }
