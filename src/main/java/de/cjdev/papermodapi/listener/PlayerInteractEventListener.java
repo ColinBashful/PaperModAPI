@@ -8,7 +8,6 @@ import de.cjdev.papermodapi.api.item.CustomItems;
 import de.cjdev.papermodapi.api.util.ActionResult;
 import de.cjdev.papermodapi.api.util.BlockHitResult;
 import de.cjdev.papermodapi.api.util.ItemUsageContext;
-import de.cjdev.papermodapi.api.util.Util;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.UseCooldown;
 import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
@@ -17,9 +16,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.CraftEquipmentSlot;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.util.CraftBlockVector;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -29,8 +30,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-
-import java.util.Objects;
 
 public class PlayerInteractEventListener implements Listener {
 //    private final List<Player> swingingPlayers = new ArrayList<>();
@@ -61,10 +60,10 @@ public class PlayerInteractEventListener implements Listener {
             net.minecraft.world.entity.player.Player nmsPlayer = ((CraftPlayer)player).getHandle();
             Block clickedBlock = event.getClickedBlock();
             World world = clickedBlock.getWorld();
-            Level nmsLevel = nmsPlayer.level();
-            BlockState blockState = nmsLevel.getBlockState(Util.nmsBlockPos(clickedBlock.getLocation().toBlock()));
+            Level nmsLevel = ((CraftWorld)world).getHandle();
+            BlockState blockState = nmsLevel.getBlockState(CraftBlockVector.toBlockPosition(clickedBlock.getLocation().toVector().toBlockVector()));
             EquipmentSlot hand = event.getHand();
-            InteractionHand nmsHand = Util.nmsInteractionHand(hand);
+            InteractionHand nmsHand = CraftEquipmentSlot.getHand(hand);
             BlockHitResult blockHitResult = new BlockHitResult(event.getInteractionPoint().toVector(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false);
             net.minecraft.world.phys.BlockHitResult nmsBlockHitResult = blockHitResult.asNMSCopy();
             if (event.getItem() != null) {

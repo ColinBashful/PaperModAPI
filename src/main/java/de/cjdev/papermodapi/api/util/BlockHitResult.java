@@ -4,6 +4,8 @@ import io.papermc.paper.math.BlockPosition;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
+import org.bukkit.craftbukkit.block.CraftBlock;
+import org.bukkit.craftbukkit.util.CraftBlockVector;
 import org.bukkit.util.Vector;
 
 public class BlockHitResult extends HitResult {
@@ -68,6 +70,6 @@ public class BlockHitResult extends HitResult {
 
     public net.minecraft.world.phys.BlockHitResult asNMSCopy(){
         Vector hitPos = this.getPos();
-        return new net.minecraft.world.phys.BlockHitResult(new Vec3(hitPos.getX(), hitPos.getY(), hitPos.getZ()), Util.directionFromBlockFace(this.side), Util.nmsBlockPos(this.blockPos), false);
+        return new net.minecraft.world.phys.BlockHitResult(new Vec3(hitPos.getX(), hitPos.getY(), hitPos.getZ()), CraftBlock.blockFaceToNotch(this.side), CraftBlockVector.toBlockPosition(this.blockPos.toVector().toBlockVector()), false);
     }
 }

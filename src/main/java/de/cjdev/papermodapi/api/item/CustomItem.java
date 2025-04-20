@@ -38,7 +38,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class CustomItem {
-    public static final Map<CustomBlock, CustomItem> BLOCK_ITEMS = Maps.newHashMap();
+    public static final Map<CustomBlock, CustomItem> BLOCK_ITEMS;
     public static final int DEFAULT_MAX_COUNT = 64;
     public static final int MAX_MAX_COUNT = 99;
     public static final int ITEM_BAR_STEPS = 13;
@@ -381,7 +381,7 @@ public class CustomItem {
         }
     }
 
-    //static {
-    //    BLOCK_ITEMS = Maps.newHashMap();
-    //}
+    static {
+        BLOCK_ITEMS = Maps.newHashMap();
+    }
 }
