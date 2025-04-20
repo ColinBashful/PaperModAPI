@@ -4,6 +4,7 @@ import io.papermc.paper.math.BlockPosition;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
+import org.bukkit.util.Vector;
 
 public class BlockHitResult extends HitResult {
     private final BlockFace side;
@@ -12,19 +13,19 @@ public class BlockHitResult extends HitResult {
     private final boolean insideBlock;
     private final boolean againstWorldBorder;
 
-    public static BlockHitResult createMissed(Location pos, BlockFace side, BlockPosition blockPos){
+    public static BlockHitResult createMissed(Vector pos, BlockFace side, BlockPosition blockPos){
         return new BlockHitResult(true, pos, side, blockPos, false, false);
     }
 
-    public BlockHitResult(Location pos, BlockFace side, BlockPosition blockPos, boolean insideBlock) {
+    public BlockHitResult(Vector pos, BlockFace side, BlockPosition blockPos, boolean insideBlock) {
         this(false, pos, side, blockPos, insideBlock, false);
     }
 
-    public BlockHitResult(Location pos, BlockFace side, BlockPosition blockPos, boolean insideBlock, boolean againstWorldBorder) {
+    public BlockHitResult(Vector pos, BlockFace side, BlockPosition blockPos, boolean insideBlock, boolean againstWorldBorder) {
         this(false, pos, side, blockPos, insideBlock, againstWorldBorder);
     }
 
-    private BlockHitResult(boolean missed, Location pos, BlockFace side, BlockPosition blockPos, boolean insideBlock, boolean againstWorldBorder) {
+    private BlockHitResult(boolean missed, Vector pos, BlockFace side, BlockPosition blockPos, boolean insideBlock, boolean againstWorldBorder) {
         super(pos);
         this.missed = missed;
         this.side = side;

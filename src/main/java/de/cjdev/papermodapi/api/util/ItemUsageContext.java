@@ -7,6 +7,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 public class ItemUsageContext {
@@ -37,7 +38,7 @@ public class ItemUsageContext {
         return this.hit.getSide();
     }
 
-    public Location getHitPos(){
+    public Vector getHitPos(){
         return this.hit.getPos();
     }
 

@@ -2,11 +2,12 @@ package de.cjdev.papermodapi.api.util;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.util.Vector;
 
 public abstract class HitResult {
-    protected final Location pos;
+    protected final Vector pos;
 
-    protected HitResult(Location pos){
+    protected HitResult(Vector pos){
         this.pos = pos;
     }
 
@@ -19,7 +20,7 @@ public abstract class HitResult {
 
     public abstract Type getType();
 
-    public Location getPos(){
+    public Vector getPos(){
         return this.pos;
     }
 
