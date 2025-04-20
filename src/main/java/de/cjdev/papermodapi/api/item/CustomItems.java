@@ -2,7 +2,6 @@ package de.cjdev.papermodapi.api.item;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.component.CustomDataComponents;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;

@@ -18,6 +18,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -39,14 +40,15 @@ public class CustomCreativeInventory implements InventoryHolder {
             this.items = selectedItemGroup.getDisplayStacks().stream().toList();
         }else {
             this.inventory = plugin.getServer().createInventory(this, 9*6, Component.text("Custom Items"));
-            this.items = CustomItemGroups.getItemGroups().values().stream().map(itemGroup -> {
+            this.items = new ArrayList<>();
+            CustomItemGroups.getItemGroups().forEach((key, itemGroup) -> {
                 ItemStack iconStack = itemGroup.iconSupplier.get();
                 iconStack.editMeta(itemMeta -> itemMeta.itemName(itemGroup.displayName));
                 CompoundTag customData = new CompoundTag();
-                customData.putString("group", CustomItemGroups.getKeyByGroup(itemGroup).asString());
+                customData.putString("group", key.asString());
                 CraftItemStack.unwrap(iconStack).set(DataComponents.CUSTOM_DATA, CustomData.of(customData));
-                return iconStack;
-            }).toList();
+                this.items.add(iconStack);
+            });
         }
         this.maxPage = this.items.size() / (inventory.getSize() - 9);
         refresh();
