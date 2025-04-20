@@ -17,6 +17,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 public class Util {
@@ -90,9 +91,8 @@ public class Util {
         // Don't wanna throw an error .-.
         // Nobody has ever placed a block with their feet before, have they?
         InteractionHand hand = nmsInteractionHand(context.getHand());
-        Level level = ((CraftWorld)context.getWorld()).getHandle();
-        Location hitLocation = context.getHitPos();
-        Vec3 hitSpot = new Vec3(hitLocation.x(), hitLocation.y(), hitLocation.z());
+        Vector hitLocation = context.getHitPos();
+        Vec3 hitSpot = new Vec3(hitLocation.getX(), hitLocation.getY(), hitLocation.getZ());
         Direction direction = directionFromBlockFace(context.getSide());
         BlockPos blockPos = nmsBlockPos(context.getBlockPos());
 

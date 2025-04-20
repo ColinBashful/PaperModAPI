@@ -59,7 +59,7 @@ public class PlayerInteractEventListener implements Listener {
             Level nmsLevel = nmsPlayer.level();
             BlockState blockState = nmsLevel.getBlockState(Util.nmsBlockPos(event.getClickedBlock().getLocation().toBlock()));
             InteractionHand nmsHand = Util.nmsInteractionHand(event.getHand());
-            net.minecraft.world.phys.BlockHitResult nmsBlockHitResult = new BlockHitResult(event.getInteractionPoint(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false).asNMSCopy();
+            net.minecraft.world.phys.BlockHitResult nmsBlockHitResult = new BlockHitResult(event.getInteractionPoint().toVector(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false).asNMSCopy();
             if (event.getItem() != null) {
                 net.minecraft.world.item.ItemStack nmsStack = CraftItemStack.unwrap(event.getItem());
                 if(blockState.useItemOn(nmsStack, nmsLevel, nmsPlayer, nmsHand, nmsBlockHitResult).consumesAction()){
@@ -198,7 +198,7 @@ public class PlayerInteractEventListener implements Listener {
                     player.swingHand(hand);
             }
             case RIGHT_CLICK_BLOCK -> {
-                actionResult = customItem.useOnBlock(new ItemUsageContext(player, hand, new BlockHitResult(event.getInteractionPoint(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false, false), player.getWorld(), event.getItem()));
+                actionResult = customItem.useOnBlock(new ItemUsageContext(player, hand, new BlockHitResult(event.getInteractionPoint().toVector(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false, false), player.getWorld(), event.getItem()));
                 if (actionResult.shouldSwingHand())
                     player.swingHand(hand);
             }

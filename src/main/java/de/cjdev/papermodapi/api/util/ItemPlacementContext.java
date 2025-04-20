@@ -8,6 +8,7 @@ import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 public class ItemPlacementContext extends ItemUsageContext {
@@ -26,7 +27,7 @@ public class ItemPlacementContext extends ItemUsageContext {
     }
 
     public static ItemPlacementContext offset(ItemPlacementContext context, BlockPosition pos, BlockFace side) {
-        return new ItemPlacementContext(context.getWorld(), context.getPlayer(), context.getHand(), context.getStack(), new BlockHitResult(context.getBlockPos().offset(side).toVector()));
+        return new ItemPlacementContext(context.getWorld(), context.getPlayer(), context.getHand(), context.getStack(), new BlockHitResult(new Vector(pos.blockX() + 0.5F + side.getModX() * 0.5F, pos.blockY() + 0.5F + side.getModY() * 0.5F, pos.blockZ() + 0.5F + side.getModZ() * 0.5F), side, pos, false));
     }
 
     public BlockPosition getBlockPos() {

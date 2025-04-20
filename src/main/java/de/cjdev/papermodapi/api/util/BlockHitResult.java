@@ -67,7 +67,7 @@ public class BlockHitResult extends HitResult {
     }
 
     public net.minecraft.world.phys.BlockHitResult asNMSCopy(){
-        Location hitPos = this.getPos();
-        return new net.minecraft.world.phys.BlockHitResult(new Vec3(hitPos.x(), hitPos.y(), hitPos.z()), Util.directionFromBlockFace(this.side), Util.nmsBlockPos(this.blockPos), false);
+        Vector hitPos = this.getPos();
+        return new net.minecraft.world.phys.BlockHitResult(new Vec3(hitPos.getX(), hitPos.getY(), hitPos.getZ()), Util.directionFromBlockFace(this.side), Util.nmsBlockPos(this.blockPos), false);
     }
 }
