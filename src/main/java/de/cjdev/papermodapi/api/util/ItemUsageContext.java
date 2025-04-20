@@ -1,7 +1,6 @@
 package de.cjdev.papermodapi.api.util;
 
 import io.papermc.paper.math.BlockPosition;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;

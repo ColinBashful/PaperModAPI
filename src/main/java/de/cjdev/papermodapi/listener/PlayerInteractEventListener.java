@@ -1,6 +1,8 @@
 package de.cjdev.papermodapi.listener;
 
 import de.cjdev.papermodapi.PaperModAPI;
+import de.cjdev.papermodapi.api.block.UseItemOnCallback;
+import de.cjdev.papermodapi.api.block.UseWithoutItemCallback;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import de.cjdev.papermodapi.api.item.CustomItems;
 import de.cjdev.papermodapi.api.util.ActionResult;
@@ -11,9 +13,10 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.UseCooldown;
 import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
@@ -55,16 +58,38 @@ public class PlayerInteractEventListener implements Listener {
 //        player.setVelocity(new Vector(oldVector.getX() + playerRotation.getX(), oldVector.getY() + playerRotation.getY(), oldVector.getZ() + playerRotation.getZ()));
 
         if (!player.isSneaking() && event.getClickedBlock() != null && event.getInteractionPoint() != null) {
-            net.minecraft.world.entity.player.Player nmsPlayer = ((CraftPlayer)event.getPlayer()).getHandle();
+            net.minecraft.world.entity.player.Player nmsPlayer = ((CraftPlayer)player).getHandle();
+            Block clickedBlock = event.getClickedBlock();
+            World world = clickedBlock.getWorld();
             Level nmsLevel = nmsPlayer.level();
-            BlockState blockState = nmsLevel.getBlockState(Util.nmsBlockPos(event.getClickedBlock().getLocation().toBlock()));
-            InteractionHand nmsHand = Util.nmsInteractionHand(event.getHand());
-            net.minecraft.world.phys.BlockHitResult nmsBlockHitResult = new BlockHitResult(event.getInteractionPoint().toVector(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false).asNMSCopy();
+            BlockState blockState = nmsLevel.getBlockState(Util.nmsBlockPos(clickedBlock.getLocation().toBlock()));
+            EquipmentSlot hand = event.getHand();
+            InteractionHand nmsHand = Util.nmsInteractionHand(hand);
+            BlockHitResult blockHitResult = new BlockHitResult(event.getInteractionPoint().toVector(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false);
+            net.minecraft.world.phys.BlockHitResult nmsBlockHitResult = blockHitResult.asNMSCopy();
             if (event.getItem() != null) {
                 net.minecraft.world.item.ItemStack nmsStack = CraftItemStack.unwrap(event.getItem());
+                for (UseItemOnCallback useItemOnCallback : PaperModAPI.USE_ITEM_ON_BLOCK_CALLBACKS) {
+                    ActionResult actionResult;
+                    if ((actionResult = useItemOnCallback.onEvent(event.getItem(), world, player, hand, blockHitResult)) != ActionResult.PASS) {
+                        if(hand != null && actionResult.shouldSwingHand())
+                            event.getPlayer().swingHand(hand);
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
                 if(blockState.useItemOn(nmsStack, nmsLevel, nmsPlayer, nmsHand, nmsBlockHitResult).consumesAction()){
-                    if(event.getHand() != null)
-                        event.getPlayer().swingHand(event.getHand());
+                    if(hand != null)
+                        event.getPlayer().swingHand(hand);
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+            for (UseWithoutItemCallback useWithoutItemCallback : PaperModAPI.USE_BLOCK_WITHOUT_ITEM_CALLBACKS) {
+                ActionResult actionResult;
+                if ((actionResult = useWithoutItemCallback.onEvent(world, player, blockHitResult)) != ActionResult.PASS) {
+                    if(hand != null && actionResult.shouldSwingHand())
+                        event.getPlayer().swingHand(hand);
                     event.setCancelled(true);
                     return;
                 }
@@ -72,6 +97,7 @@ public class PlayerInteractEventListener implements Listener {
             if (blockState.useWithoutItem(((CraftWorld) player.getWorld()).getHandle(), ((CraftPlayer) player).getHandle(), nmsBlockHitResult).consumesAction()) {
                 if(event.getHand() != null)
                     event.getPlayer().swingHand(event.getHand());
+                event.setCancelled(true);
                 return;
             }
         }

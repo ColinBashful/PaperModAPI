@@ -2,6 +2,8 @@ package de.cjdev.papermodapi;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import de.cjdev.papermodapi.api.block.UseItemOnCallback;
+import de.cjdev.papermodapi.api.block.UseWithoutItemCallback;
 import de.cjdev.papermodapi.api.item.TooltipCallback;
 import de.cjdev.papermodapi.init.CommandInit;
 import de.cjdev.papermodapi.inventory.CustomCreativeInventory;
@@ -24,6 +26,8 @@ public final class PaperModAPI extends JavaPlugin {
     public static Logger LOGGER;
 
     public static final List<TooltipCallback> TOOLTIP_CALLBACKS = new ArrayList<>();
+    public static final List<UseWithoutItemCallback> USE_BLOCK_WITHOUT_ITEM_CALLBACKS = new ArrayList<>();
+    public static final List<UseItemOnCallback> USE_ITEM_ON_BLOCK_CALLBACKS = new ArrayList<>();
 
     ///
     /// Don't ask me why the entire class gets deleted if unused for too long or whatever the reason is
