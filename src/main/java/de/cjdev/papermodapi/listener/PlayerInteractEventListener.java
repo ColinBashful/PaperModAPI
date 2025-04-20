@@ -1,5 +1,6 @@
 package de.cjdev.papermodapi.listener;
 
+import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import de.cjdev.papermodapi.api.item.CustomItems;
 import de.cjdev.papermodapi.api.util.ActionResult;
@@ -26,6 +27,8 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Objects;
+
 public class PlayerInteractEventListener implements Listener {
 //    private final List<Player> swingingPlayers = new ArrayList<>();
 //
@@ -51,31 +54,26 @@ public class PlayerInteractEventListener implements Listener {
 //        Vector playerRotation = new Vector(-Math.sin(yawRad) * Math.cos(pitchRad), -Math.sin(pitchRad), Math.cos(yawRad) * Math.cos(pitchRad));
 //        player.setVelocity(new Vector(oldVector.getX() + playerRotation.getX(), oldVector.getY() + playerRotation.getY(), oldVector.getZ() + playerRotation.getZ()));
 
-        InteractionResult interactionResult = null;
         if (!player.isSneaking() && event.getClickedBlock() != null && event.getInteractionPoint() != null) {
             net.minecraft.world.entity.player.Player nmsPlayer = ((CraftPlayer)event.getPlayer()).getHandle();
             Level nmsLevel = nmsPlayer.level();
             BlockState blockState = nmsLevel.getBlockState(Util.nmsBlockPos(event.getClickedBlock().getLocation().toBlock()));
             InteractionHand nmsHand = Util.nmsInteractionHand(event.getHand());
             net.minecraft.world.phys.BlockHitResult nmsBlockHitResult = new BlockHitResult(event.getInteractionPoint(), event.getBlockFace(), event.getClickedBlock().getLocation().toBlock(), false).asNMSCopy();
-            net.minecraft.world.item.ItemStack nmsStack;
-            if(event.getItem() == null || (nmsStack = CraftItemStack.unwrap(event.getItem())) == null)
-                interactionResult = blockState.useWithoutItem(((CraftWorld) player.getWorld()).getHandle(), ((CraftPlayer) player).getHandle(), nmsBlockHitResult);
-            else{
-                interactionResult = blockState.useItemOn(nmsStack, nmsLevel, nmsPlayer, nmsHand, nmsBlockHitResult);
-                if(interactionResult.consumesAction()){
+            if (event.getItem() != null) {
+                net.minecraft.world.item.ItemStack nmsStack = CraftItemStack.unwrap(event.getItem());
+                if(blockState.useItemOn(nmsStack, nmsLevel, nmsPlayer, nmsHand, nmsBlockHitResult).consumesAction()){
                     if(event.getHand() != null)
                         event.getPlayer().swingHand(event.getHand());
                     event.setCancelled(true);
                     return;
                 }
             }
-        }
-
-        if (interactionResult != null && interactionResult.consumesAction()){
-            if(event.getHand() != null)
-                event.getPlayer().swingHand(event.getHand());
-            return;
+            if (blockState.useWithoutItem(((CraftWorld) player.getWorld()).getHandle(), ((CraftPlayer) player).getHandle(), nmsBlockHitResult).consumesAction()) {
+                if(event.getHand() != null)
+                    event.getPlayer().swingHand(event.getHand());
+                return;
+            }
         }
 
         if (event.getHand() == null || event.getItem() == null)
