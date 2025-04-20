@@ -2,6 +2,7 @@ package de.cjdev.papermodapi.api.item;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import de.cjdev.papermodapi.api.block.CustomBlockItem;
 import de.cjdev.papermodapi.api.component.CustomDataComponents;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -28,9 +29,9 @@ public class CustomItems {
 
     public static <T extends CustomItem> T register(NamespacedKey key, Function<CustomItem.Settings, T> factory, CustomItem.Settings settings) {
         T item = factory.apply(settings.registryKey(key));
-//        if (item instanceof CustomBlockItem blockItem) {
-//            blockItem.appendBlocks(CustomItem.BLOCK_ITEMS, item);
-//        }
+        if (item instanceof CustomBlockItem blockItem) {
+            blockItem.appendBlocks(CustomItem.BLOCK_ITEMS, item);
+        }
 
         CustomItem customItem = items.putIfAbsent(key, item);
         if (customItem != null) {
