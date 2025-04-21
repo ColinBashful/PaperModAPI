@@ -42,6 +42,7 @@ public class CustomItem {
     public static final int DEFAULT_MAX_COUNT = 64;
     public static final int MAX_MAX_COUNT = 99;
     public static final int ITEM_BAR_STEPS = 13;
+    private final NamespacedKey registryKey;
     private final Material baseMaterial;
     private final boolean dyeable;
     private final Map<DataComponentType, Object> components;
@@ -54,7 +55,7 @@ public class CustomItem {
     private final ItemStack displayStack;
 
     public static @Nullable NamespacedKey getId(CustomItem item) {
-        return item == null ? null : CustomItems.getKeyByItem(item);
+        return item == null ? null : item.registryKey;
     }
 
     public static @Nullable CustomItem byId(NamespacedKey key) {
@@ -62,13 +63,13 @@ public class CustomItem {
     }
 
     public CustomItem(Settings settings) {
+        this.registryKey = settings.registryKey;
         this.baseMaterial = settings.getBaseMaterial();
         this.dyeable = settings.canDye();
         this.translationKey = settings.getTranslationKey();
         this.components = settings.getValidatedComponents();
         this.recipeRemainder = settings.recipeRemainder;
 
-        NamespacedKey itemId = settings.registryKey;
         ItemStack defaultStack = ItemStack.of(this.getBaseMaterial());
         ItemStack displayStack = defaultStack.clone();
 
@@ -76,7 +77,7 @@ public class CustomItem {
             itemMeta.itemName(getName());
             itemMeta.setItemModel(settings.getModelId());
         });
-        displayStack.editMeta(itemMeta -> itemMeta.setItemModel(itemId));
+        displayStack.editMeta(itemMeta -> itemMeta.setItemModel(registryKey));
 
         this.components.forEach((type, o) -> {
             if (type == DataComponentTypes.CUSTOM_MODEL_DATA) {
@@ -85,7 +86,7 @@ public class CustomItem {
             if (type == DataComponentTypes.USE_COOLDOWN) {
                 UseCooldown original = ((UseCooldown) o);
                 Key group = original.cooldownGroup();
-                defaultStack.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(original.seconds()).cooldownGroup(group == null ? itemId : group).build());
+                defaultStack.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(original.seconds()).cooldownGroup(group == null ? registryKey : group).build());
                 return;
             }
             if (type instanceof DataComponentType.Valued valued)
@@ -97,7 +98,7 @@ public class CustomItem {
 
         Map<CustomDataComponent, ?> customData = settings.getCustomComponents();
         customData.forEach((customDataComponent, value) -> customDataComponent.set(defaultStack, value));
-        CustomDataComponents.ITEM_COMPONENT.set(defaultStack, itemId);
+        CustomDataComponents.ITEM_COMPONENT.set(defaultStack, registryKey);
 
         this.defaultStack = defaultStack;
         this.displayStack = displayStack;
