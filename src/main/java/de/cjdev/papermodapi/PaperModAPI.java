@@ -98,8 +98,6 @@ public final class PaperModAPI extends JavaPlugin {
             if (onlinePlayer.getOpenInventory().getTopInventory().getHolder() instanceof CustomCreativeInventory customCreativeInventory)
                 customCreativeInventory.getInventory().close();
         }
-
-        PacketEvents.getAPI().terminate();
     }
 
     public static PaperModAPI getPlugin(){

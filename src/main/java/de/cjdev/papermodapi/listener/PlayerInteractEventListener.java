@@ -14,6 +14,7 @@ import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.CraftEquipmentSlot;
@@ -25,6 +26,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -32,8 +34,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 public class PlayerInteractEventListener implements Listener {
-//    private final List<Player> swingingPlayers = new ArrayList<>();
-//
+
 //    private static boolean checkCollisionWithEntities(Location location, VoxelShape shape){
 //        World world = location.getWorld();
 //        Location blockPos = location.toBlockLocation();
@@ -56,7 +57,7 @@ public class PlayerInteractEventListener implements Listener {
 //        Vector playerRotation = new Vector(-Math.sin(yawRad) * Math.cos(pitchRad), -Math.sin(pitchRad), Math.cos(yawRad) * Math.cos(pitchRad));
 //        player.setVelocity(new Vector(oldVector.getX() + playerRotation.getX(), oldVector.getY() + playerRotation.getY(), oldVector.getZ() + playerRotation.getZ()));
 
-        if (!player.isSneaking() && event.getClickedBlock() != null && event.getInteractionPoint() != null) {
+        if (!player.isSneaking() && event.getClickedBlock() != null && event.getInteractionPoint() != null && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             net.minecraft.world.entity.player.Player nmsPlayer = ((CraftPlayer)player).getHandle();
             Block clickedBlock = event.getClickedBlock();
             World world = clickedBlock.getWorld();
