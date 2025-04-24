@@ -54,6 +54,10 @@ public class CustomItem {
     private final ItemStack defaultStack;
     private final ItemStack displayStack;
 
+    public @Nullable NamespacedKey getId() {
+        return this.registryKey;
+    }
+
     public static @Nullable NamespacedKey getId(CustomItem item) {
         return item == null ? null : item.registryKey;
     }
@@ -112,7 +116,7 @@ public class CustomItem {
         if (stack == null || stack.isEmpty())
             return false;
         NamespacedKey itemId = CustomItems.getKeyByStack(stack);
-        return itemId != null && itemId.equals(getId(this));
+        return itemId != null && itemId.equals(registryKey);
     }
 
     /// Simply returns the DefaultStack without the unnecessary components
@@ -145,7 +149,7 @@ public class CustomItem {
     }
 
     public String toString() {
-        return CustomItems.getKeyByItem(this).asString();
+        return registryKey.asString();
     }
 
     public String getTranslationKey() {
@@ -195,8 +199,10 @@ public class CustomItem {
         player.setCooldown(stack, (int)(seconds * 20));
     }
 
+    /**
+     * @deprecated Use {@link CustomItem#isSimilar(ItemStack, ItemStack)} instead.
+     */
     @Deprecated(
-            forRemoval = true,
             since = "1.2"
     )
     public static boolean sameItem(ItemStack stack, ItemStack otherStack) {

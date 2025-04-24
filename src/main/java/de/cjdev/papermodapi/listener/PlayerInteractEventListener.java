@@ -14,7 +14,7 @@ import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.CraftEquipmentSlot;
@@ -47,6 +47,8 @@ public class PlayerInteractEventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
+        if (player.getGameMode() == GameMode.SPECTATOR)
+            return;
 //        Vector oldVector = player.getVelocity();
 //
 //        float yaw = player.getYaw();
@@ -97,7 +99,6 @@ public class PlayerInteractEventListener implements Listener {
             if (blockState.useWithoutItem(((CraftWorld) player.getWorld()).getHandle(), ((CraftPlayer) player).getHandle(), nmsBlockHitResult).consumesAction()) {
                 if(event.getHand() != null)
                     event.getPlayer().swingHand(event.getHand());
-                event.setCancelled(true);
                 return;
             }
         }

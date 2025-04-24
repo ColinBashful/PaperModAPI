@@ -45,6 +45,7 @@ public class PaperModAPIPacketListener implements PacketListener {
                 NBTByteArray originalItem = packet.getItemStack().getComponentOr(ComponentTypes.CUSTOM_DATA, new NBTCompound()).getTagOfTypeOrNull("modapi:original_item", NBTByteArray.class);
                 if (originalItem == null) return;
                 ItemStack originalStack = ItemStack.deserializeBytes(originalItem.getValue());
+                originalStack.setAmount(packet.getItemStack().getAmount());
                 packet.setItemStack(SpigotConversionUtil.fromBukkitItemStack(originalStack));
             }
             case PacketType.Play.Client.USE_ITEM -> {
@@ -118,7 +119,7 @@ public class PaperModAPIPacketListener implements PacketListener {
         packetItem.setComponent(ComponentTypes.LORE, new ItemLore(lines));
 
         NBTCompound customData = packetItem.getComponentOr(ComponentTypes.CUSTOM_DATA, new NBTCompound());
-        stack.setAmount(Math.min(stack.getAmount(), Item.ABSOLUTE_MAX_STACK_SIZE));
+        stack.setAmount(1);
         customData.setTag("modapi:original_item", new NBTByteArray(stack.serializeAsBytes()));
         packetItem.setComponent(ComponentTypes.CUSTOM_DATA, customData);
     }

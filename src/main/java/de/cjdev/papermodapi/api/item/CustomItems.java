@@ -48,8 +48,14 @@ public class CustomItems {
         return stack == null ? null : getItemByKey(getKeyByStack(stack));
     }
 
+    /**
+     * @deprecated Use {@link CustomItem#getId(CustomItem)} or {@link CustomItem#getId()} instead.
+     */
+    @Deprecated(
+            since = "1.2"
+    )
     public static @Nullable NamespacedKey getKeyByItem(CustomItem item) {
-        return items.inverse().get(item);
+        return item.getId();
     }
 
     public static boolean isCustomStack(ItemStack stack) {

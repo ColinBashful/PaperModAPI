@@ -48,11 +48,11 @@ public class Util {
         return CraftBlock.blockFaceToNotch(side);
     }
 
-    public static Axis nmsAxis(BlockFace side){
+    public static Direction.Axis nmsAxis(BlockFace side){
         return switch (side) {
-            case WEST, EAST -> Axis.X;
-            case UP, DOWN -> Axis.Y;
-            default -> Axis.Z; // NORTH, SOUTH
+            case WEST, EAST -> Direction.Axis.X;
+            case UP, DOWN -> Direction.Axis.Y;
+            default -> Direction.Axis.Z; // NORTH, SOUTH
         };
     }
 
