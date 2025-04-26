@@ -3,6 +3,8 @@ package de.cjdev.papermodapi.inventory;
 import de.cjdev.papermodapi.api.itemgroup.CustomItemGroup;
 import de.cjdev.papermodapi.api.itemgroup.CustomItemGroups;
 import de.cjdev.papermodapi.helper.PlayerHeadHelper;
+import io.papermc.paper.registry.keys.SoundEventKeys;
+import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -30,6 +32,8 @@ public class CustomCreativeInventory implements InventoryHolder {
     private int page = 0;
     private final int maxPage;
     private final List<ItemStack> items;
+
+    private static final Sound UI_CLICK_SOUND;
 
     public CustomCreativeInventory(JavaPlugin plugin, boolean hasOp, CustomItemGroup selectedItemGroup) {
         this.plugin = plugin;
@@ -102,7 +106,10 @@ public class CustomCreativeInventory implements InventoryHolder {
             } else if (clickedSlot == inventory.getSize() - 1 && page < maxPage) {
                 ++page;
                 refresh();
+            } else {
+                return;
             }
+            event.getWhoClicked().playSound(UI_CLICK_SOUND);
             return;
         }
 
@@ -116,6 +123,7 @@ public class CustomCreativeInventory implements InventoryHolder {
             String group = CraftItemStack.unwrap(currentItem).get(DataComponents.CUSTOM_DATA).getUnsafe().getString("group");
             player.openInventory(new CustomCreativeInventory(plugin, player.isOp(), itemGroups.get(NamespacedKey.fromString(group))).getInventory());
             this.inventory.close();
+            event.getWhoClicked().playSound(UI_CLICK_SOUND);
             return;
         }
 
@@ -197,4 +205,9 @@ public class CustomCreativeInventory implements InventoryHolder {
                 break;
         }
     }
+
+    static {
+        UI_CLICK_SOUND = Sound.sound(SoundEventKeys.UI_BUTTON_CLICK, Sound.Source.MASTER, 1f, 1f);
+    }
+
 }
