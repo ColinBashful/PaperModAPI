@@ -3,7 +3,6 @@ package de.cjdev.papermodapi.api.component;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.codecs.PrimitiveCodec;
-import de.cjdev.papermodapi.PaperModAPI;
 import org.bukkit.NamespacedKey;
 
 import java.util.UUID;

@@ -328,7 +328,7 @@ public class CustomItem {
         }
 
         public Settings translationKey(String translationKey) {
-            this.translationKey = id -> translationKey;
+            this.translationKey = DependantName.fixed(translationKey);
             return this;
         }
 

@@ -42,7 +42,7 @@ public final class PaperModAPI extends JavaPlugin {
         public static String gray = hexColor.formatted(170, 170, 170);
         public static String darkGray = hexColor.formatted(85, 85, 85);
         public static String darkGreen = hexColor.formatted(0, 170, 0);
-        public static String gold = hexColor.formatted(255, 170, 0);
+        //public static String gold = hexColor.formatted(255, 170, 0);
     }
 
     @Override

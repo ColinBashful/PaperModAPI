@@ -21,7 +21,6 @@ import io.papermc.paper.inventory.tooltip.TooltipContext;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.minecraft.world.item.Item;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
