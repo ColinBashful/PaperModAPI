@@ -60,10 +60,10 @@ public class PlayerInteractEventListener implements Listener {
 //        player.setVelocity(new Vector(oldVector.getX() + playerRotation.getX(), oldVector.getY() + playerRotation.getY(), oldVector.getZ() + playerRotation.getZ()));
 
         if (!player.isSneaking() && event.getClickedBlock() != null && event.getInteractionPoint() != null && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            net.minecraft.world.entity.player.Player nmsPlayer = ((CraftPlayer)player).getHandle();
+            net.minecraft.world.entity.player.Player nmsPlayer = ((CraftPlayer) player).getHandle();
             Block clickedBlock = event.getClickedBlock();
             World world = clickedBlock.getWorld();
-            Level nmsLevel = ((CraftWorld)world).getHandle();
+            Level nmsLevel = ((CraftWorld) world).getHandle();
             BlockState blockState = nmsLevel.getBlockState(CraftBlockVector.toBlockPosition(clickedBlock.getLocation().toVector().toBlockVector()));
             EquipmentSlot hand = event.getHand();
             InteractionHand nmsHand = CraftEquipmentSlot.getHand(hand);
@@ -74,14 +74,14 @@ public class PlayerInteractEventListener implements Listener {
                 for (UseItemOnCallback useItemOnCallback : PaperModAPI.USE_ITEM_ON_BLOCK_CALLBACKS) {
                     ActionResult actionResult;
                     if ((actionResult = useItemOnCallback.onEvent(event.getItem(), world, player, hand, blockHitResult)) != ActionResult.PASS) {
-                        if(hand != null && actionResult.shouldSwingHand())
+                        if (hand != null && actionResult.shouldSwingHand())
                             event.getPlayer().swingHand(hand);
                         event.setCancelled(true);
                         return;
                     }
                 }
-                if(blockState.useItemOn(nmsStack, nmsLevel, nmsPlayer, nmsHand, nmsBlockHitResult).consumesAction()){
-                    if(hand != null)
+                if (blockState.useItemOn(nmsStack, nmsLevel, nmsPlayer, nmsHand, nmsBlockHitResult).consumesAction()) {
+                    if (hand != null)
                         event.getPlayer().swingHand(hand);
                     event.setCancelled(true);
                     return;
@@ -90,14 +90,14 @@ public class PlayerInteractEventListener implements Listener {
             for (UseWithoutItemCallback useWithoutItemCallback : PaperModAPI.USE_BLOCK_WITHOUT_ITEM_CALLBACKS) {
                 ActionResult actionResult;
                 if ((actionResult = useWithoutItemCallback.onEvent(world, player, blockHitResult)) != ActionResult.PASS) {
-                    if(hand != null && actionResult.shouldSwingHand())
+                    if (hand != null && actionResult.shouldSwingHand())
                         event.getPlayer().swingHand(hand);
                     event.setCancelled(true);
                     return;
                 }
             }
             if (blockState.useWithoutItem(((CraftWorld) player.getWorld()).getHandle(), ((CraftPlayer) player).getHandle(), nmsBlockHitResult).consumesAction()) {
-                if(event.getHand() != null)
+                if (event.getHand() != null)
                     event.getPlayer().swingHand(event.getHand());
                 return;
             }
@@ -258,12 +258,12 @@ public class PlayerInteractEventListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerInteractEntity(PlayerInteractEntityEvent event){
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         ItemStack stack = event.getPlayer().getInventory().getItem(event.getHand());
         CustomItem customItem = CustomItems.getItemByStack(stack);
         if (customItem == null)
             return;
-        if(customItem.useOnEntity(stack, event.getPlayer(), event.getRightClicked(), event.getHand()).shouldSwingHand())
+        if (customItem.useOnEntity(stack, event.getPlayer(), event.getRightClicked(), event.getHand()).shouldSwingHand())
             event.getPlayer().swingHand(event.getHand());
     }
 }

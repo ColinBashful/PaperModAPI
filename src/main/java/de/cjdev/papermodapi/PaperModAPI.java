@@ -31,6 +31,7 @@ public final class PaperModAPI extends JavaPlugin {
 
     ///
     /// Don't ask me why the entire class gets deleted if unused for too long or whatever the reason is
+    /// Answer: Just don't reload :thumbs_up: it's funky otherwise
     ///
     public static final Function<Boolean, CustomCreativeInventory> CUSTOM_CREATIVE_INVENTORY = hasOp -> new CustomCreativeInventory(getPlugin(), hasOp, null);
 
@@ -60,7 +61,7 @@ public final class PaperModAPI extends JavaPlugin {
         // Registering Event Listeners
         PluginManager pluginManager = Bukkit.getPluginManager();
         pluginManager.registerEvents(new PlayerInteractEventListener(), this);
-        pluginManager.registerEvents(new InventoryClickEventListener(), this);
+        pluginManager.registerEvents(new InventoryEventListener(), this);
         pluginManager.registerEvents(new ItemDespawnEventListener(), this);
 
         // Registering Commands

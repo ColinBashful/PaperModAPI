@@ -14,6 +14,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-public class CustomCreativeInventory implements InventoryHolder {
+public class CustomCreativeInventory implements InventoryHolder, GUIInterface {
     private final JavaPlugin plugin;
     private final CustomItemGroup selectedItemGroup;
     private final Inventory inventory;
@@ -88,6 +89,7 @@ public class CustomCreativeInventory implements InventoryHolder {
                 .forEach(value -> inventory.setItem(value % validInventorySize, items.get(value)));
     }
 
+    @Override
     public void onClickEvent(InventoryClickEvent event) {
         HumanEntity player = event.getWhoClicked();
 
@@ -204,6 +206,11 @@ public class CustomCreativeInventory implements InventoryHolder {
                 event.setCancelled(true);
                 break;
         }
+    }
+
+    @Override
+    public void onDragEvent(InventoryDragEvent event) {
+        event.setCancelled(true);
     }
 
     static {

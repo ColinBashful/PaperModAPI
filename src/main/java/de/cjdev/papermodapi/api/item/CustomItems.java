@@ -1,19 +1,19 @@
 package de.cjdev.papermodapi.api.item;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import de.cjdev.papermodapi.api.block.CustomBlockItem;
 import de.cjdev.papermodapi.api.component.CustomDataComponents;
+import de.cjdev.papermodapi.api.register.Registries;
+import de.cjdev.papermodapi.api.register.Registry;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CustomItems {
-    private static final BiMap<NamespacedKey, CustomItem> items = HashBiMap.create();
 
     public static CustomItem register(NamespacedKey id, CustomItem.Settings settings) {
         return register(id, CustomItem::new, settings);
@@ -28,20 +28,15 @@ public class CustomItems {
     }
 
     public static <T extends CustomItem> T register(NamespacedKey key, Function<CustomItem.Settings, T> factory, CustomItem.Settings settings) {
-        T item = factory.apply(settings.registryKey(key));
+        T item = Registry.register(Registries.ITEM, key, factory.apply(settings.registryKey(key)));
         if (item instanceof CustomBlockItem blockItem) {
             blockItem.appendBlocks(CustomItem.BLOCK_ITEMS, item);
-        }
-
-        CustomItem customItem = items.putIfAbsent(key, item);
-        if (customItem != null) {
-            throw new IllegalArgumentException("[Item] " + key.toString() + " has already been registered.");
         }
         return item;
     }
 
     public static @Nullable CustomItem getItemByKey(NamespacedKey key) {
-        return items.get(key);
+        return Registries.ITEM.getValue(key);
     }
 
     public static @Nullable CustomItem getItemByStack(ItemStack stack){
@@ -63,10 +58,18 @@ public class CustomItems {
     }
 
     public static @Nullable NamespacedKey getKeyByStack(ItemStack stack) {
-        return CustomDataComponents.ITEM_COMPONENT.get(stack);
+        return getKeyByStack(stack, false);
+    }
+
+    public static @Nullable NamespacedKey getKeyByStack(ItemStack stack, boolean includeVanilla) {
+        return CustomDataComponents.ITEM_COMPONENT.getOrDefault(stack, includeVanilla ? stack.getType().getKey() : null);
+    }
+
+    public static Set<NamespacedKey> getItemKeys(){
+        return Registries.ITEM.keySet();
     }
 
     public static List<ItemStack> getItemStacks(){
-        return items.values().stream().map(CustomItem::getDefaultStack).collect(Collectors.toList());
+        return Registries.ITEM.stream().map(CustomItem::getDefaultStack).collect(Collectors.toList());
     }
 }

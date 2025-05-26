@@ -34,8 +34,8 @@ repositories {
 */
 
 dependencies {
-    paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("${project.minecraft_version}-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:${project.minecraft_version}-R0.1-SNAPSHOT")
     //annotationProcessor('org.spongepowered.mixin:0.8.0')
     //implementation('net.minecrell:MixinBootstrap:1.1.0')
     compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")

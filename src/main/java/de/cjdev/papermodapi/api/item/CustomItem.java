@@ -214,7 +214,7 @@ public class CustomItem {
             return false;
         NamespacedKey item = CustomDataComponents.ITEM_COMPONENT.get(stack);
         NamespacedKey otherItem = CustomDataComponents.ITEM_COMPONENT.get(otherStack);
-        return item != null && Objects.equals(item, otherItem);
+        return Objects.equals(item, otherItem);
     }
 
     public static class Settings {

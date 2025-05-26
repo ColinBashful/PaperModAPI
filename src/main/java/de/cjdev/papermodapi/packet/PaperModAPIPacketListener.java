@@ -39,6 +39,10 @@ public class PaperModAPIPacketListener implements PacketListener {
 
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
+        final User user = event.getUser();
+        final Player player = event.getPlayer();
+        if (player == null)
+            return;
         switch (event.getPacketType()) {
             case PacketType.Play.Client.CREATIVE_INVENTORY_ACTION -> {
                 final WrapperPlayClientCreativeInventoryAction packet = new WrapperPlayClientCreativeInventoryAction(event);
@@ -56,8 +60,6 @@ public class PaperModAPIPacketListener implements PacketListener {
                     hand = EquipmentSlot.HAND;
 
                 final int currentTick = Bukkit.getCurrentTick();
-                final User user = event.getUser();
-                final Player player = event.getPlayer();
 
                 int previousLastUsed = Objects.requireNonNullElse(lastUsed.put(user.getUUID(), currentTick), -1);
                 final boolean newStart = previousLastUsed + 4 != currentTick;
@@ -126,14 +128,17 @@ public class PaperModAPIPacketListener implements PacketListener {
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
+        Player player = event.getPlayer();
+        if (player == null)
+            return;
         switch (event.getPacketType()) {
             case PacketType.Play.Server.SET_SLOT -> {
                 WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
-                appendTooltip(packet.getItem(), event.getPlayer());
+                appendTooltip(packet.getItem(), player);
             }
             case PacketType.Play.Server.WINDOW_ITEMS -> {
                 WrapperPlayServerWindowItems packet = new WrapperPlayServerWindowItems(event);
-                packet.getItems().forEach(packetItem -> appendTooltip(packetItem, event.getPlayer()));
+                packet.getItems().forEach(packetItem -> appendTooltip(packetItem, player));
             }
             default -> {}
         }

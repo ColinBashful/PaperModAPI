@@ -14,7 +14,7 @@ public class MoreCodecs {
         @Override
         public <T> DataResult<NamespacedKey> read(DynamicOps<T> ops, T input) {
             return ops.getStringValue(input).mapOrElse(key -> {
-                NamespacedKey resultKey = NamespacedKey.fromString(key, PaperModAPI.getPlugin());
+                NamespacedKey resultKey = NamespacedKey.fromString(key);
                 if (resultKey != null)
                     return DataResult.success(resultKey);
                 return DataResult.error(() -> "Something went wrong :/");
