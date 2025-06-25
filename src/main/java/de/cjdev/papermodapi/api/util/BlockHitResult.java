@@ -2,7 +2,6 @@ package de.cjdev.papermodapi.api.util;
 
 import io.papermc.paper.math.BlockPosition;
 import net.minecraft.world.phys.Vec3;
-import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.craftbukkit.block.CraftBlock;
 import org.bukkit.craftbukkit.util.CraftBlockVector;

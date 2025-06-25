@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.11"
+    id("io.papermc.paperweight.userdev") version "${paperweight_version}"
     // id 'com.gradleup.shadow' version '9.0.0-beta4'
 }
 
@@ -34,11 +34,11 @@ repositories {
 */
 
 dependencies {
-    paperweight.paperDevBundle("${project.minecraft_version}-R0.1-SNAPSHOT")
-    compileOnly("io.papermc.paper:paper-api:${project.minecraft_version}-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("${minecraft_version}-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:${minecraft_version}-R0.1-SNAPSHOT")
     //annotationProcessor('org.spongepowered.mixin:0.8.0')
     //implementation('net.minecrell:MixinBootstrap:1.1.0')
-    compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
+    compileOnly("com.github.retrooper:packetevents-spigot:${packetevents_version}")
 }
 
 def targetJavaVersion = 21

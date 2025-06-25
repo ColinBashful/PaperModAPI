@@ -122,7 +122,8 @@ public class CustomCreativeInventory implements InventoryHolder, GUIInterface {
             if (currentItem == null || currentItem.isEmpty())
                 return;
             Map<NamespacedKey, CustomItemGroup> itemGroups = CustomItemGroups.getItemGroups();
-            String group = CraftItemStack.unwrap(currentItem).get(DataComponents.CUSTOM_DATA).getUnsafe().getString("group");
+            String group = CraftItemStack.unwrap(currentItem).get(DataComponents.CUSTOM_DATA).getUnsafe().getString("group").orElse(null);
+            if (group == null) return;
             player.openInventory(new CustomCreativeInventory(plugin, player.isOp(), itemGroups.get(NamespacedKey.fromString(group))).getInventory());
             this.inventory.close();
             event.getWhoClicked().playSound(UI_CLICK_SOUND);
