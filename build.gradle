@@ -61,7 +61,7 @@ tasks.withType(JavaCompile).configureEach {
 
 jar {
     destinationDirectory.set(file("C:/Minecraft Servers/Paper Plugin Test Server/plugins"))
-    archiveFileName = "${getArchiveBaseName().get()}-${getArchiveVersion().get()}+${project.minecraft_version}.${getArchiveExtension().get()}"
+    archiveFileName = "${getArchiveBaseName().get()}-${getArchiveVersion().get()}+${minecraft_version}.${getArchiveExtension().get()}"
 }
 
 processResources {
