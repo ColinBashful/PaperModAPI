@@ -1,6 +1,7 @@
 name: PaperModAPI
 version: "${version}"
 main: de.cjdev.papermodapi.PaperModAPI
+bootstrapper: de.cjdev.papermodapi.PaperModAPIBootstrapper
 api-version: '1.21'
 load: STARTUP
 authors: [CJDev]
@@ -8,6 +9,9 @@ description: A Modding API for Paper
 website: https://modrinth.com/project/paper-mod-api
 dependencies:
   server:
-    packetevents:
+    #packetevents:
+    #  required: true
+    #  load: BEFORE
+    DynamicRP:
       required: true
       load: BEFORE

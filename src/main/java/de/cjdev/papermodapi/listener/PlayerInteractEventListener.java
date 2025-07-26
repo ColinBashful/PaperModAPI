@@ -10,7 +10,9 @@ import de.cjdev.papermodapi.api.util.BlockHitResult;
 import de.cjdev.papermodapi.api.util.ItemUsageContext;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.UseCooldown;
+import io.papermc.paper.event.player.AsyncChatDecorateEvent;
 import io.papermc.paper.event.player.PlayerStopUsingItemEvent;
+import net.kyori.adventure.text.format.TextColor;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -43,6 +45,11 @@ public class PlayerInteractEventListener implements Listener {
 //                        !world.getNearbyEntities(boundingBox.shift(blockPos),
 //                                entity -> !(entity instanceof Item)).isEmpty());
 //    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onChatMessage(AsyncChatDecorateEvent event) {
+        event.originalMessage().color(TextColor.color(255, 0, 0));
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(PlayerInteractEvent event) {

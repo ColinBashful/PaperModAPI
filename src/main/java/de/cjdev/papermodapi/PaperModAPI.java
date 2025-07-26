@@ -1,23 +1,17 @@
 package de.cjdev.papermodapi;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import de.cjdev.papermodapi.api.block.UseItemOnCallback;
 import de.cjdev.papermodapi.api.block.UseWithoutItemCallback;
 import de.cjdev.papermodapi.api.item.TooltipCallback;
 import de.cjdev.papermodapi.init.CommandInit;
 import de.cjdev.papermodapi.inventory.CustomCreativeInventory;
-import de.cjdev.papermodapi.listener.*;
-import de.cjdev.papermodapi.packet.PaperModAPIPacketListener;
-import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -55,9 +49,6 @@ public final class PaperModAPI extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        plugin = this;
-        LOGGER = getLogger();
-
         // Registering Event Listeners
         PluginManager pluginManager = Bukkit.getPluginManager();
         pluginManager.registerEvents(new PlayerInteractEventListener(), this);
@@ -66,26 +57,6 @@ public final class PaperModAPI extends JavaPlugin {
 
         // Registering Commands
         CommandInit.load(getLifecycleManager(), this);
-
-        // Inventory Tick
-//        new BukkitRunnable() {
-//            @Override
-//            public void run() {
-//                Bukkit.getWorlds().iterator().forEachRemaining(world -> {
-//                    world.getEntities().stream().filter(entity -> entity instanceof LivingEntity).forEach(livingEntity -> {
-//                        //((LivingEntity)livingEntity)
-//                        Inventory inventory = ((LivingEntity)livingEntity).getInventory();
-//                        for (int slot = 0; slot < inventory.getSize(); ++slot){
-//                            ItemStack stack = inventory.getItem(slot);
-//                            CustomItem customItem = CustomItems.getItemByStack(stack);
-//                            if(customItem == null)
-//                                return;
-//                            customItem.inventoryTick(stack, inventoryEntity.getWorld(), inventoryEntity, slot, false);
-//                        }
-//                    });
-//                });
-//            }
-//        }.runTaskTimerAsynchronously(this, 1, 1);
 
         // Loaded Message
         LOGGER.info(ConsoleColor.blue + "\n ___   _    ___  ___  ___         _   _      _    ___      " + ConsoleColor.darkGreen + "PaperModAPI " + ConsoleColor.gray + getPluginMeta().getVersion() + ConsoleColor.blue + "\n" +

@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Axis;
@@ -122,5 +123,19 @@ public class Util {
         BlockHitResult hitResult = new BlockHitResult(hitSpot, direction, blockPos, false);
 
         return new UseOnContext(player, hand, hitResult);
+    }
+
+    ///
+    /// @apiNote You'll need paperweight for this
+    ///
+    public static ArmorType getArmorType(EquipmentSlot slot) {
+        return switch (slot) {
+            case FEET -> ArmorType.BOOTS;
+            case LEGS -> ArmorType.LEGGINGS;
+            case CHEST -> ArmorType.CHESTPLATE;
+            case HEAD -> ArmorType.HELMET;
+            case BODY -> ArmorType.BODY;
+            default -> throw new IllegalArgumentException();
+        };
     }
 }

@@ -8,25 +8,31 @@ import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.protocol.player.User;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCreativeInventoryAction;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientUseItem;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetSlot;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowItems;
 import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItem;
 import de.cjdev.papermodapi.api.item.CustomItems;
 import de.cjdev.papermodapi.api.item.TooltipCallback;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.papermc.paper.inventory.tooltip.TooltipContext;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.CustomData;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,14 +50,20 @@ public class PaperModAPIPacketListener implements PacketListener {
             return;
         switch (event.getPacketType()) {
             case PacketType.Play.Client.CREATIVE_INVENTORY_ACTION -> {
-                final WrapperPlayClientCreativeInventoryAction packet = new WrapperPlayClientCreativeInventoryAction(event);
-                NBTByteArray originalItem = packet.getItemStack().getComponentOr(ComponentTypes.CUSTOM_DATA, new NBTCompound()).getTagOfTypeOrNull("modapi:original_item", NBTByteArray.class);
-                if (originalItem == null) return;
-                ItemStack originalStack = ItemStack.deserializeBytes(originalItem.getValue());
-                originalStack.setAmount(packet.getItemStack().getAmount());
-                packet.setItemStack(SpigotConversionUtil.fromBukkitItemStack(originalStack));
+                /*final var packet = new de.cjdev.papermodapi.packet.wrapper.play.client.WrapperPlayClientCreativeInventoryAction(event);
+                final var stack = packet.getItemStack();
+                if (stack.isEmpty()) return;
+                var tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).getUnsafe();
+                Integer id = tag.getInt("modapi:id").orElse(null);
+                if (id == null) return;
+                Holder<Item> item = BuiltInRegistries.ITEM.get(id).orElse(null);
+                if (item == null) return;
+                var itemStack = new net.minecraft.world.item.ItemStack(item, stack.getCount());
+                tag.getCompound("modapi:patch").flatMap(components ->
+                        DataComponentPatch.CODEC.parse(NbtOps.INSTANCE, components).result()).ifPresent(itemStack::applyComponents);
+                packet.setItemStack(itemStack);*/
             }
-            case PacketType.Play.Client.USE_ITEM -> {
+            /*case PacketType.Play.Client.USE_ITEM -> {
                 final WrapperPlayClientUseItem packet = new WrapperPlayClientUseItem(event);
 
                 EquipmentSlot hand = EquipmentSlot.OFF_HAND;
@@ -85,9 +97,37 @@ public class PaperModAPIPacketListener implements PacketListener {
                         }
                     }
                 }.runTask(PaperModAPI.getPlugin());
-            }
+            }*/
             default -> {
             }
+        }
+    }
+
+    public static @NotNull net.minecraft.world.item.ItemStack decodeCreative(net.minecraft.world.item.ItemStack stack) {
+        if (stack.isEmpty()) return stack;
+        var tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).getUnsafe();
+        net.minecraft.world.item.ItemStack itemStack = null;
+        Integer id = tag.getInt("modapi:id").orElse(null);
+        if (id != null) {
+            Holder<Item> item = BuiltInRegistries.ITEM.get(id).orElse(null);
+            if (item == null) return stack;
+            itemStack = new net.minecraft.world.item.ItemStack(item, stack.getCount());
+        }
+        DataComponentPatch patch = tag.getCompound("modapi:patch")
+                .flatMap(components -> DataComponentPatch.CODEC.parse(NbtOps.INSTANCE, components).result()).orElse(null);
+
+        if (itemStack != null) {
+            if (patch == null) return itemStack;
+            net.minecraft.world.item.ItemStack clone = itemStack.getItem().getDefaultInstance();
+            clone.setCount(stack.getCount());
+            clone.applyComponents(patch);
+            return clone;
+        } else {
+            if (patch == null) return stack;
+            net.minecraft.world.item.ItemStack clone = stack.getItem().getDefaultInstance();
+            clone.setCount(stack.getCount());
+            clone.applyComponents(patch);
+            return clone;
         }
     }
 
@@ -131,16 +171,69 @@ public class PaperModAPIPacketListener implements PacketListener {
         if (player == null)
             return;
         switch (event.getPacketType()) {
-            case PacketType.Play.Server.SET_SLOT -> {
-                WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
-                appendTooltip(packet.getItem(), player);
+            /*case PacketType.Play.Server.SET_SLOT -> {
+                final var packet = new de.cjdev.papermodapi.packet.wrapper.play.server.WrapperPlayServerSetSlot(event);
+                packet.setItem(applyCustom(packet.getItem()));
+                PaperModAPI.LOGGER.info(packet.getItem().toString());
+                //appendTooltip(packet.getItem(), player);
+                //event.setCancelled(true);
             }
             case PacketType.Play.Server.WINDOW_ITEMS -> {
-                WrapperPlayServerWindowItems packet = new WrapperPlayServerWindowItems(event);
-                packet.getItems().forEach(packetItem -> appendTooltip(packetItem, player));
+                // The fact that this even gets made, makes packetevents throw
+                // which is why I need to make a custom wrapper
+                //var packet = new WrapperPlayServerWindowItems(event);
+                final var packet = new WrapperPlayServerWindowItems(event);
+
+                ListIterator<net.minecraft.world.item.ItemStack> iterator = packet.getItems().listIterator();
+                while (iterator.hasNext()) {
+                    iterator.set(applyCustom(iterator.next()));
+                } // eh, not rn
+
+                //event.setCancelled(true);
             }
+            case PacketType.Play.Server.ENTITY_METADATA -> {
+                //final var packet = new WrapperPlayServerEntityMetadata(event);
+                event.setCancelled(true);
+            }*/
+            //case PacketType.Play.Server.SYSTEM_CHAT_MESSAGE -> {
+            //    //final var packet = new WrapperPlayServerSystemChatMessage(event);
+            //    //packet.setMessage(modifyShowItemHoverEvents(packet.getMessage()));
+            //    event.setCancelled(true);
+            //} // man i just realised it would be so much easier with mixins, just change Item.STREAM_CODEC fr :sob: lol
+            /*case PacketType.Play.Server.ENTITY_EQUIPMENT -> {
+                // that fixes it, trust
+                event.setCancelled(true);
+                // ahh, don't have access wideners w(ﾟДﾟ)w
+            }
+            case PacketType.Play.Server.SET_CURSOR_ITEM -> {
+                final var packet = new WrapperPlayServerSetCursorItem(event);
+                packet.setStack(applyCustom(packet.getStack()));
+            }
+            case PacketType.Play.Server.SET_PLAYER_INVENTORY -> {
+                final var packet = new WrapperPlayServerSetPlayerInventory(event);
+                packet.setStack(applyCustom(packet.getStack()));
+            }*/
             default -> {}
         }
+    }
+
+    public static Component modifyShowItemHoverEvents(Component component) {
+        Style style = component.style();
+        HoverEvent<?> hoverEvent = style.hoverEvent();
+
+        PaperModAPI.LOGGER.info(component.toString());
+        if (hoverEvent != null && hoverEvent.action() == HoverEvent.Action.SHOW_ITEM) {
+            HoverEvent.ShowItem showItem = (HoverEvent.ShowItem) hoverEvent.value();
+            HoverEvent.ShowItem modified = HoverEvent.ShowItem.showItem(Key.key("minecraft", "dirt"), showItem.count(), showItem.dataComponents());
+
+            component = component.style(style.hoverEvent(HoverEvent.showItem(modified)));
+        }
+
+        List<Component> modifiedChildren = component.children().stream()
+                .map(PaperModAPIPacketListener::modifyShowItemHoverEvents)
+                .toList();
+
+        return component.children(modifiedChildren);
     }
 
     @Override

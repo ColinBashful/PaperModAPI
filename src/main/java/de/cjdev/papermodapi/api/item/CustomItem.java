@@ -5,6 +5,7 @@ import de.cjdev.papermodapi.api.block.CustomBlock;
 import de.cjdev.papermodapi.api.component.CustomDataComponent;
 import de.cjdev.papermodapi.api.component.CustomDataComponents;
 import de.cjdev.papermodapi.api.util.ActionResult;
+import de.cjdev.papermodapi.api.util.CustomArmorMaterial;
 import de.cjdev.papermodapi.api.util.ItemUsageContext;
 import de.cjdev.papermodapi.api.util.Util;
 import io.papermc.paper.datacomponent.DataComponentType;
@@ -13,21 +14,22 @@ import io.papermc.paper.datacomponent.item.*;
 import io.papermc.paper.inventory.tooltip.TooltipContext;
 import io.papermc.paper.registry.RegistryKey;
 import io.papermc.paper.registry.TypedKey;
+import io.papermc.paper.registry.keys.SoundEventKeys;
 import io.papermc.paper.registry.keys.tags.DamageTypeTagKeys;
 import io.papermc.paper.registry.set.RegistryKeySet;
 import io.papermc.paper.registry.set.RegistrySet;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.minecraft.world.item.equipment.ArmorType;
 import org.bukkit.*;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.craftbukkit.util.CraftNamespacedKey;
+import org.bukkit.entity.*;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,8 @@ import java.util.function.Consumer;
 
 public class CustomItem {
     public static final Map<CustomBlock, CustomItem> BLOCK_ITEMS;
+    public static final NamespacedKey BASE_ATTACK_DAMAGE_ID;
+    public static final NamespacedKey BASE_ATTACK_SPEED_ID;
     public static final int DEFAULT_MAX_COUNT = 64;
     public static final int MAX_MAX_COUNT = 99;
     public static final int ITEM_BAR_STEPS = 13;
@@ -240,73 +244,109 @@ public class CustomItem {
             this.modelId = key -> key;
         }
 
-        public final Settings dyeable() {
+        public Settings dyeable() {
             this.dyeable = true;
             return this;
         }
 
-        public final Settings food(FoodProperties food) {
+        public Settings food(FoodProperties food) {
             return this.food(food, Consumable.consumable().build());
         }
 
-        public final Settings food(FoodProperties food, Consumable consumable) {
+        public Settings food(FoodProperties food, Consumable consumable) {
             return this.component(DataComponentTypes.FOOD, food).component(DataComponentTypes.CONSUMABLE, consumable);
         }
 
-        public final Settings useRemainder(ItemStack convertInto) {
+        public Settings useRemainder(ItemStack convertInto) {
             return this.component(DataComponentTypes.USE_REMAINDER, UseRemainder.useRemainder(convertInto));
         }
 
-        public final Settings useCooldown(float seconds) {
+        public Settings useCooldown(float seconds) {
             return this.component(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(seconds).build());
         }
 
-        public final Settings maxCount(int maxCount) {
+        public Settings maxCount(int maxCount) {
             return this.component(DataComponentTypes.MAX_STACK_SIZE, maxCount);
         }
 
-        public final Settings maxDamage(int maxDamage) {
+        public Settings maxDamage(int maxDamage) {
             this.component(DataComponentTypes.MAX_DAMAGE, maxDamage);
             this.component(DataComponentTypes.MAX_STACK_SIZE, 1);
             this.component(DataComponentTypes.DAMAGE, 0);
             return this;
         }
 
-        public final Settings recipeRemainder(Consumer<ItemStack> recipeRemainder) {
+        public Settings recipeRemainder(Consumer<ItemStack> recipeRemainder) {
             this.recipeRemainder = recipeRemainder;
             return this;
         }
 
-        public final Settings rarity(ItemRarity rarity) {
+        public Settings rarity(ItemRarity rarity) {
             return this.component(DataComponentTypes.RARITY, rarity);
         }
 
-        public final Settings fireproof() {
+        public Settings fireproof() {
             return this.component(DataComponentTypes.DAMAGE_RESISTANT, DamageResistant.damageResistant(DamageTypeTagKeys.IS_FIRE));
         }
 
-        public final Settings jukeboxPlayable(JukeboxSong songKey) {
+        public Settings jukeboxPlayable(JukeboxSong songKey) {
             return this.component(DataComponentTypes.JUKEBOX_PLAYABLE, JukeboxPlayable.jukeboxPlayable(songKey).build());
         }
 
-        public final Settings enchantable(int enchantability) {
+        public Settings enchantable(int enchantability) {
             return this.component(DataComponentTypes.ENCHANTABLE, Enchantable.enchantable(enchantability));
         }
 
-        public final Settings repairable(Material repairIngredient) {
+        public Settings repairable(Material repairIngredient) {
             return this.component(DataComponentTypes.REPAIRABLE, Repairable.repairable(RegistrySet.keySet(RegistryKey.ITEM, TypedKey.create(RegistryKey.ITEM, repairIngredient.getKey()))));
         }
 
-        public final Settings repairable(RegistryKeySet<ItemType> repairIngredientsTag) {
+        public Settings repairable(RegistryKeySet<ItemType> repairIngredientsTag) {
             return this.component(DataComponentTypes.REPAIRABLE, Repairable.repairable(repairIngredientsTag));
         }
 
-        public final Settings equippable(EquipmentSlot slot) {
+        public Settings equippable(EquipmentSlot slot) {
             return this.component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).build());
         }
 
-        public final Settings equippableUnswappable(EquipmentSlot slot) {
+        public Settings equippableUnswappable(EquipmentSlot slot) {
             return this.component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).swappable(false).build());
+        }
+
+        public Settings tool(ToolMaterial toolMaterial, Tag<Material> correctForDrops, float attackDamage, float attackSpeed, float disableBlockingForSeconds) {
+            return toolMaterial.applyToolSettings(this, correctForDrops, attackDamage, attackSpeed, disableBlockingForSeconds);
+        }
+
+        public Settings pickaxe(ToolMaterial toolMaterial, float attackDamage, float attackSpeed) {
+            return toolMaterial.applyToolSettings(this, Tag.MINEABLE_PICKAXE, attackDamage, attackSpeed, 0.0F);
+        }
+
+        public Settings axe(ToolMaterial toolMaterial, float attackDamage, float attackSpeed) {
+            return toolMaterial.applyToolSettings(this, Tag.MINEABLE_AXE, attackDamage, attackSpeed, 5.0F);
+        }
+
+        public Settings hoe(ToolMaterial toolMaterial, float attackDamage, float attackSpeed) {
+            return toolMaterial.applyToolSettings(this, Tag.MINEABLE_HOE, attackDamage, attackSpeed, 0.0F);
+        }
+
+        public Settings shovel(ToolMaterial toolMaterial, float attackDamage, float attackSpeed) {
+            return toolMaterial.applyToolSettings(this, Tag.MINEABLE_SHOVEL, attackDamage, attackSpeed, 0.0F);
+        }
+
+        public Settings humanoidArmor(CustomArmorMaterial armorMaterial, EquipmentSlot slot) {
+            return this.maxDamage(Util.getArmorType(slot).getDurability(armorMaterial.durability())).attributeModifiers(armorMaterial.createAttributes(slot)).enchantable(armorMaterial.enchantmentValue()).component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(slot).equipSound(armorMaterial.equipSound()).assetId(armorMaterial.modelId()).build()).repairable(armorMaterial.repairIngredient());
+        }
+
+        public Settings wolfArmor(CustomArmorMaterial armorMaterial, float attackDamage, float attackSpeed) {
+            return this.maxDamage(ArmorType.BODY.getDurability(armorMaterial.durability())).attributeModifiers(armorMaterial.createAttributes(EquipmentSlot.BODY)).enchantable(armorMaterial.enchantmentValue()).repairable(armorMaterial.repairIngredient()).component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(EquipmentSlot.BODY).equipSound(armorMaterial.equipSound()).assetId(armorMaterial.modelId()).allowedEntities(RegistrySet.keySet(RegistryKey.ENTITY_TYPE, TypedKey.create(RegistryKey.ENTITY_TYPE, EntityType.WOLF.getKey()))).canBeSheared(true).shearSound(SoundEventKeys.ITEM_ARMOR_UNEQUIP_WOLF).build()).component(DataComponentTypes.BREAK_SOUND, SoundEventKeys.ITEM_WOLF_ARMOR_BREAK);
+        }
+
+        public Settings horseArmor(CustomArmorMaterial armorMaterial, float attackDamage, float attackSpeed) {
+            return this.attributeModifiers(armorMaterial.createAttributes(EquipmentSlot.BODY)).enchantable(armorMaterial.enchantmentValue()).repairable(armorMaterial.repairIngredient()).component(DataComponentTypes.EQUIPPABLE, Equippable.equippable(EquipmentSlot.BODY).equipSound(armorMaterial.equipSound()).assetId(armorMaterial.modelId()).allowedEntities(RegistrySet.keySet(RegistryKey.ENTITY_TYPE, TypedKey.create(RegistryKey.ENTITY_TYPE, Tag.ENTITY_TYPES_CAN_WEAR_HORSE_ARMOR.getKey()))).damageOnHurt(false).canBeSheared(true).shearSound(SoundEventKeys.ITEM_HORSE_ARMOR_UNEQUIP).build()).maxCount(1);
+        }
+
+        public Settings trimMaterial(TrimMaterial trimMaterial) {
+            return this.component(DataComponentTypes.PROVIDES_TRIM_MATERIAL, trimMaterial);
         }
 
         public final Settings registryKey(NamespacedKey registryKey) {
@@ -390,5 +430,7 @@ public class CustomItem {
 
     static {
         BLOCK_ITEMS = Maps.newHashMap();
+        BASE_ATTACK_DAMAGE_ID = CraftNamespacedKey.fromMinecraft(net.minecraft.world.item.Item.BASE_ATTACK_DAMAGE_ID);
+        BASE_ATTACK_SPEED_ID = CraftNamespacedKey.fromMinecraft(net.minecraft.world.item.Item.BASE_ATTACK_SPEED_ID);
     }
 }
