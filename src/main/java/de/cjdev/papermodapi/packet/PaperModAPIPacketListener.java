@@ -6,7 +6,6 @@ import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemLor
 import com.github.retrooper.packetevents.protocol.nbt.NBTByteArray;
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.protocol.player.User;
 import de.cjdev.papermodapi.PaperModAPI;
 import de.cjdev.papermodapi.api.item.CustomItem;
@@ -30,7 +29,6 @@ import net.minecraft.world.item.component.CustomData;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 

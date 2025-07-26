@@ -8,14 +8,13 @@ import de.cjdev.papermodapi.inventory.CustomCreativeInventory;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
-public final class PaperModAPI extends JavaPlugin {
+public final class PaperModAPI extends JavaPlugin { // and where do we get all plugins? youll see :trol: yeye :(
     private static PaperModAPI plugin;
     public static Logger LOGGER;
 
@@ -41,19 +40,46 @@ public final class PaperModAPI extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        plugin = this;
+        LOGGER = getLogger();
 
-        PacketEvents.getAPI().getEventManager().registerListener(
-                new PaperModAPIPacketListener(), PacketListenerPriority.HIGHEST);
+
+        //PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+
+        //PacketEvents.getAPI().getEventManager().registerListener(
+        //        new PaperModAPIPacketListener(), PacketListenerPriority.HIGHEST);
+
+        //Constructor<Material> newMaterial;
+        //try {
+        //    for (Constructor<?> declaredConstructor : Material.class.getDeclaredConstructors()) {
+        //        LOGGER.info(Arrays.toString(declaredConstructor.getParameters()));
+        //    }
+        //    newMaterial = Material.class.getDeclaredConstructor(String.class, int.class, int.class);
+        //    newMaterial.setAccessible(true);
+        //} catch (NoSuchMethodException e) {
+        //    throw new RuntimeException(e);
+        //}
+//
+        //for (Map.Entry<ResourceKey<Item>, Item> entry : BuiltInRegistries.ITEM.entrySet()) {
+        //    Item item = entry.getValue();
+        //    if (!(item instanceof PaperModAPIItem)) continue;
+        //    try {
+        //        ResourceLocation id = entry.getKey().location();
+        //        newMaterial.newInstance(id.getNamespace().toUpperCase(Locale.ROOT) + "_" + id.getPath().toUpperCase(Locale.ROOT), -1, item.getDefaultMaxStackSize());
+        //    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        //        throw new RuntimeException(e);
+        //    }
+        //}
+
     }
 
     @Override
     public void onEnable() {
         // Registering Event Listeners
-        PluginManager pluginManager = Bukkit.getPluginManager();
-        pluginManager.registerEvents(new PlayerInteractEventListener(), this);
-        pluginManager.registerEvents(new InventoryEventListener(), this);
-        pluginManager.registerEvents(new ItemDespawnEventListener(), this);
+        //PluginManager pluginManager = Bukkit.getPluginManager();
+        //pluginManager.registerEvents(new PlayerInteractEventListener(), this);
+        //pluginManager.registerEvents(new InventoryEventListener(), this);
+        //pluginManager.registerEvents(new ItemDespawnEventListener(), this);
 
         // Registering Commands
         CommandInit.load(getLifecycleManager(), this);
